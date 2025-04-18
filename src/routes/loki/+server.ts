@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     const headers = new Headers(request.headers);
     headers.delete('Authorization');
     // Proxy the request to another server
-    const targetUrl = `http://localhost:3100/${url.searchParams.get('path')}`; 
+    const targetUrl = `http://localhost:3100/loki/${url.searchParams.get('path')}`; 
     const body = await request.text(); 
 
     try {
