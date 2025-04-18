@@ -30,6 +30,12 @@ export const POST: RequestHandler = async ({ request, url }) => {
             duplex: 'half' // Add this option for streaming body
         });
 
+        const responseClone = response.clone();
+        
+        // Read and log the response body
+        const responseBody = await responseClone.text();
+        console.log('Response from target URL:', responseBody);
+
         return new Response(response.body, {
             status: response.status,
             headers: response.headers
