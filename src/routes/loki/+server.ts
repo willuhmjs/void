@@ -21,10 +21,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
     const targetUrl = `http://localhost:3100/loki/${url.searchParams.get('path')}`;
 
     try {
+            const bodyText = await new Response(request.body).text();
         const response = await fetch(targetUrl, {
             method: 'POST',
             headers, // You can send all headers or just forward selected ones
-            body: new Request(request).body, // Forward raw body stream
+            body: bodyText, // Forward raw body stream
         });
 
         return new Response(response.body, {
