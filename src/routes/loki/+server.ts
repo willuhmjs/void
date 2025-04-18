@@ -1,42 +1,33 @@
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request, url }) => {
-    // Extract the Authorization header
-
     const authHeader = request.headers.get('Authorization');
 
-    // Check if the Authorization header exists and starts with "Bearer "
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return new Response('Unauthorized', { status: 401 });
     }
 
-    const token = authHeader.substring(7); // Extract the token (after "Bearer ")
+    const token = authHeader.substring(7);
     console.log(token);
-    // Verify the token (placeholder, implement your logic here)
+
     const isTokenValid = true; // Replace with actual token verification logic
     if (!isTokenValid) {
         return new Response('Unauthorized', { status: 401 });
     }
+
     const headers = new Headers(request.headers);
-    headers.delete('Authorization');
-    // Proxy the request to another server
-    const targetUrl = `http://localhost:3100/loki/${url.searchParams.get('path')}`; 
-    const body = await request.text(); 
+    headers.delete('Authorization'); // Optional, depending on target server requirements
+
+    const targetUrl = `http://localhost:3100/loki/${url.searchParams.get('path')}`;
 
     try {
         const response = await fetch(targetUrl, {
             method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            Authorization: authHeader
-            },
-            body
+            headers, // You can send all headers or just forward selected ones
+            body: request.body // Forward raw body stream
         });
 
-        const responseText = await response.text();
-        console.log(`Response from ${targetUrl}:`, responseText);
-
-        return new Response(responseText, {
+        return new Response(response.body, {
             status: response.status,
             headers: response.headers
         });
