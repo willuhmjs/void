@@ -27,6 +27,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
             headers: headers,
             body: request.body, // Use the original body stream directly
             redirect: 'follow',
+            duplex: 'half' // Add this option for streaming body
         });
 
         return new Response(response.body, {
