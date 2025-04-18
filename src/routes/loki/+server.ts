@@ -1,8 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, url }) => {
     // Extract the Authorization header
-    console.log("Request with token " + request.headers.get('Authorization'));
 
     const authHeader = request.headers.get('Authorization');
 
@@ -21,7 +20,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const headers = new Headers(request.headers);
     headers.delete('Authorization');
     // Proxy the request to another server
-    const targetUrl = 'http://localhost:3100/loki/api/v1/push'; 
+    const targetUrl = `http://localhost:3100/${url.searchParams.get('path')}`; 
     const body = await request.text(); 
 
     try {
