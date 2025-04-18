@@ -21,14 +21,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
     const targetUrl = `http://localhost:3100/loki/${url.searchParams.get('path')}`;
 
     try {
-        // Clone the original request body
-        const clonedBody = await request.clone().text();
-        
-        // Forward the request to the target server
+        // Forward the request to the target server with the original body stream
         const response = await fetch(targetUrl, {
             method: request.method,
             headers: headers,
-            body: clonedBody,
+            body: request.body, // Use the original body stream directly
             redirect: 'follow',
         });
 
