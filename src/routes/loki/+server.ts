@@ -16,16 +16,13 @@ export const POST: RequestHandler = async ({ request, url }) => {
     }
 
     const headers = new Headers(request.headers);
-    headers.delete('Authorization'); // Optional, depending on target server requirements
+    // headers.delete('Authorization'); // Optional, depending on target server requirements
 
     const targetUrl = `http://localhost:3100/loki/${url.searchParams.get('path')}`;
 
     try {
         // Clone the original request body
         const clonedBody = await request.clone().text();
-        
-        // Update Content-Length header to match the actual body size
-        headers.set('Content-Length', clonedBody.length.toString());
         
         // Forward the request to the target server
         const response = await fetch(targetUrl, {
