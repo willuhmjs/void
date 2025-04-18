@@ -21,11 +21,18 @@ export const POST: RequestHandler = async ({ request, url }) => {
     const targetUrl = `http://localhost:3100/loki/${url.searchParams.get('path')}`;
 
     try {
-            const bodyText = await new Response(request.body).text();
+        // Clone the original request body
+        const clonedBody = await request.clone().text();
+        
+        // Update Content-Length header to match the actual body size
+        headers.set('Content-Length', clonedBody.length.toString());
+        
+        // Forward the request to the target server
         const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers, // You can send all headers or just forward selected ones
-            body: bodyText, // Forward raw body stream
+            method: request.method,
+            headers: headers,
+            body: clonedBody,
+            redirect: 'follow',
         });
 
         return new Response(response.body, {
