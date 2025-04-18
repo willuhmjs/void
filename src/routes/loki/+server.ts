@@ -2,6 +2,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request }) => {
     // Extract the Authorization header
+    console.log("Request with token " + request.headers.get('Authorization'));
+
     const authHeader = request.headers.get('Authorization');
 
     // Check if the Authorization header exists and starts with "Bearer "
