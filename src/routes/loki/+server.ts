@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
         const response = await fetch(targetUrl, {
             method: 'POST',
             headers, // You can send all headers or just forward selected ones
-            body: request.body // Forward raw body stream
+            body: new Request(request).body, // Forward raw body stream
         });
 
         return new Response(response.body, {
