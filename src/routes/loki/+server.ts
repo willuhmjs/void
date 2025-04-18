@@ -34,7 +34,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
         });
 
         const responseText = await response.text();
-        console.log('Response from target server:', responseText);
+        console.log(`Response from ${targetUrl}:`, responseText);
 
         return new Response(responseText, {
             status: response.status,
