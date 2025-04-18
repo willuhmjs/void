@@ -27,13 +27,16 @@ export const POST: RequestHandler = async ({ request, url }) => {
         const response = await fetch(targetUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                Authorization: authHeader
+            'Content-Type': 'application/json',
+            Authorization: authHeader
             },
             body
         });
 
-        return new Response(await response.text(), {
+        const responseText = await response.text();
+        console.log('Response from target server:', responseText);
+
+        return new Response(responseText, {
             status: response.status,
             headers: response.headers
         });
