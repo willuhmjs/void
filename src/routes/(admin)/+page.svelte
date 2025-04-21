@@ -26,17 +26,26 @@
     }
 
     main {
-        max-width: 1200px;
-        margin: 2rem auto;
+        margin: 0;
         padding: var(--spacing);
         background-color: var(--color-bg);
         display: flex;
+        flex-direction: column;
         gap: var(--spacing);
     }
 
-    section {
+    .top-section {
+        width: 100%;
+    }
+
+    .side-by-side {
+        display: flex;
+        gap: var(--spacing);
+        width: 100%;
+    }
+
+    .side-by-side > section {
         flex: 1;
-        margin-bottom: 2rem;
     }
 
     .card {
@@ -142,96 +151,123 @@
 </style>
 
 <main>
-    <section class="card">
-        <h2 class="heading">Tokens</h2>
+    <section class="card top-section">
+        <h2 class="heading">User Auth Tokens</h2>
 
-        <form method="post" action="?/add-token" class="form-inline">
-            <input
-                type="text"
-                name="name"
-                placeholder="Token Name"
-                required
-            />
-            <button type="submit">Add Token</button>
+        <form method="post" action="?/add-user-auth-token" class="form-inline">
+            <button type="submit">Add User Auth Token</button>
         </form>
 
-        {#if data.tokens.length > 0}
+        {#if (data.userAuthTokens ?? []).length > 0}
             <ul>
-                {#each data.tokens as token}
+                {#each data.userAuthTokens ?? [] as token}
                     <li class="card">
                         <div><strong>Token:</strong> {token.token}</div>
-                        <div><strong>Name:</strong> {token.name}</div>
-                        <form method="post" action="?/delete-token" class="form-inline">
+                        <form method="post" action="?/delete-user-auth-token" class="form-inline">
                             <input type="hidden" name="tokenId" value={token.id} />
-                            <button type="submit">Delete</button>
-                        </form>
-
-                        <form method="post" action="?/update-token-endpoints" class="token-list">
-                            <input type="hidden" name="tokenId" value={token.id} />
-                            <label for="endpoints">Assign Endpoints:</label>
-                            <select name="endpoints" multiple>
-                                {#each data.endpoints as endpoint}
-                                    <option
-                                        value={endpoint.id}
-                                        selected={token.endpoints?.some(e => e.id === endpoint.id)}
-                                    >
-                                        {endpoint.endpoint}
-                                    </option>
-                                {/each}
-                            </select>
-                            <button type="submit">Update Endpoints</button>
-                        </form>
-                    </li>
-                {/each}
-            </ul>
-        {:else}
-            <p>No tokens available.</p>
-        {/if}
-    </section>
-
-    <section class="card">
-        <h2 class="heading">Endpoints</h2>
-
-        <form method="post" action="?/add-endpoint" class="form-inline">
-            <select name="method" required>
-                <option value="POST">POST</option>
-                <option value="GET">GET</option>
-                <option value="PUT">PUT</option>
-                <option value="DELETE">DELETE</option>
-            </select>
-            <input
-                type="text"
-                name="endpoint"
-                placeholder="Endpoint"
-                required
-            />
-            <input
-                type="text"
-                name="remote_endpoint"
-                placeholder="Remote Endpoint"
-                required
-            />
-            <button type="submit">Add Endpoint</button>
-        </form>
-
-        {#if data.endpoints.length > 0}
-            <ul>
-                {#each data.endpoints as endpoint}
-                    <li class="card">
-                        <div class="endpoint-details">
-                            <div><strong>Endpoint:</strong> {endpoint.endpoint}</div>
-                            <div><strong>Remote:</strong> {endpoint.remote_endpoint}</div>
-                            <div><strong>Method:</strong> {endpoint.method}</div>
-                        </div>
-                        <form method="post" action="?/delete-endpoint" class="form-inline">
-                            <input type="hidden" name="endpointId" value={endpoint.id} />
                             <button type="submit">Delete</button>
                         </form>
                     </li>
                 {/each}
             </ul>
         {:else}
-            <p>No endpoints available.</p>
+            <p>No user auth tokens available.</p>
         {/if}
     </section>
+
+    <div class="side-by-side">
+        <section class="card">
+            <h2 class="heading">Tokens</h2>
+
+            <form method="post" action="?/add-token" class="form-inline">
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Token Name"
+                    required
+                />
+                <button type="submit">Add Token</button>
+            </form>
+
+            {#if data.tokens.length > 0}
+                <ul>
+                    {#each data.tokens as token}
+                        <li class="card">
+                            <div><strong>Token:</strong> {token.token}</div>
+                            <div><strong>Name:</strong> {token.name}</div>
+                            <form method="post" action="?/delete-token" class="form-inline">
+                                <input type="hidden" name="tokenId" value={token.id} />
+                                <button type="submit">Delete</button>
+                            </form>
+
+                            <form method="post" action="?/update-token-endpoints" class="token-list">
+                                <input type="hidden" name="tokenId" value={token.id} />
+                                <label for="endpoints">Assign Endpoints:</label>
+                                <select name="endpoints" multiple>
+                                    {#each data.endpoints as endpoint}
+                                        <option
+                                            value={endpoint.id}
+                                            selected={token.endpoints?.some(e => e.id === endpoint.id)}
+                                        >
+                                            {endpoint.endpoint}
+                                        </option>
+                                    {/each}
+                                </select>
+                                <button type="submit">Update Endpoints</button>
+                            </form>
+                        </li>
+                    {/each}
+                </ul>
+            {:else}
+                <p>No tokens available.</p>
+            {/if}
+        </section>
+
+        <section class="card">
+            <h2 class="heading">Endpoints</h2>
+
+            <form method="post" action="?/add-endpoint" class="form-inline">
+                <select name="method" required>
+                    <option value="POST">POST</option>
+                    <option value="GET">GET</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+                <input
+                    type="text"
+                    name="endpoint"
+                    placeholder="Endpoint"
+                    required
+                />
+                <input
+                    type="text"
+                    name="remote_endpoint"
+                    placeholder="Remote Endpoint"
+                    required
+                />
+                <button type="submit">Add Endpoint</button>
+            </form>
+
+            {#if data.endpoints.length > 0}
+                <ul>
+                    {#each data.endpoints as endpoint}
+                        <li class="card">
+                            <div class="endpoint-details">
+                                <div><strong>Endpoint:</strong> {endpoint.endpoint}</div>
+                                <div><strong>Remote:</strong> {endpoint.remote_endpoint}</div>
+                                <div><strong>Method:</strong> {endpoint.method}</div>
+                                <div><strong>ID:</strong> {endpoint.id}</div>
+                            </div>
+                            <form method="post" action="?/delete-endpoint" class="form-inline">
+                                <input type="hidden" name="endpointId" value={endpoint.id} />
+                                <button type="submit">Delete</button>
+                            </form>
+                        </li>
+                    {/each}
+                </ul>
+            {:else}
+                <p>No endpoints available.</p>
+            {/if}
+        </section>
+    </div>
 </main>
