@@ -12,7 +12,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model Endpoint {
   id             String   @id @default(cuid())
   endpoint       String   @unique
@@ -20,13 +19,27 @@ model Endpoint {
   method         String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  tokens         Token[]  @relation("TokenEndpoints")
+
+  tokens         Token[]  @relation("EndpointTokens")
 }
 
 model Token {
   id        String   @id @default(cuid())
-  token     String   @unique
+  token     String
+  name      String  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  endpoints Endpoint[] @relation("TokenEndpoints")
+
+  endpoints Endpoint[] @relation("EndpointTokens")
+}
+
+// user auth tokens are tokens associated with a user for creating tokens / endpoints for the api
+model UserAuthTokens {
+  id        String   @id @default(cuid())
+  token     String   
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // userId    String
+  // user      User     @relation(fields: [userId], references: [id])
 }
