@@ -26,15 +26,24 @@ export async function load() {
             }
         });
 
+        const userAuthTokens = await prisma.userAuthTokens.findMany({
+            select: {
+                id: true,
+                token: true
+            }
+        });
+
         return {
             tokens,
-            endpoints
+            endpoints,
+            userAuthTokens
         };
     } catch (error) {
-        console.error('Error fetching tokens and endpoints:', error);
+        console.error('Error fetching data:', error);
         return {
             tokens: [],
-            endpoints: []
+            endpoints: [],
+            userAuthTokens: []
         };
     }
 }
@@ -43,12 +52,19 @@ export const actions = {
     'add-token': async ({ request }) => {
         const formData = await request.formData();
         const name = formData.get('name') as string;
+        const endpointIds = formData.getAll('endpointIds') as string[]; // User-provided endpoint IDs
 
         if (name) {
             const token = randomBytes(32).toString('hex'); // Generate a random 32-byte token
 
             await prisma.token.create({
-                data: { name, token }
+                data: {
+                    name,
+                    token,
+                    endpoints: endpointIds.length > 0
+                        ? { connect: endpointIds.map((id) => ({ id })) }
+                        : []
+                }
             });
         }
     },
@@ -80,7 +96,7 @@ export const actions = {
                         remote_endpoint,
                         tokens: tokenIds.length > 0
                             ? { connect: tokenIds.map((id) => ({ id })) }
-                            : undefined // Allow no tokens to be connected
+                            : [] // Allow no tokens to be connected
                     }
                 });
                 console.log('Endpoint created successfully'); // Debugging log
@@ -141,6 +157,23 @@ export const actions = {
                         set: endpointIds.map((id) => ({ id }))
                     }
                 }
+            });
+        }
+    },
+    'add-user-auth-token': async ({ request }) => {
+        const token = randomBytes(32).toString('hex'); // Generate a random 32-byte token
+
+        await prisma.userAuthTokens.create({
+            data: { token }
+        });
+    },
+    'delete-user-auth-token': async ({ request }) => {
+        const formData = await request.formData();
+        const tokenId = formData.get('tokenId') as string;
+
+        if (tokenId) {
+            await prisma.userAuthTokens.delete({
+                where: { id: tokenId }
             });
         }
     }

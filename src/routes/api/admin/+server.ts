@@ -1,0 +1,117 @@
+import { json } from '@sveltejs/kit';
+import { prisma } from '$lib/server/prisma/prismaConnection';
+import { randomBytes } from 'crypto';
+
+export async function POST({ request }) {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userAuthToken = authHeader.split(' ')[1];
+    const validToken = await prisma.userAuthTokens.findFirst({
+        where: { token: userAuthToken }
+    });
+
+    if (!validToken) {
+        return json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { action, data } = body;
+
+    try {
+        switch (action) {
+            case 'create-token': {
+                console.log(data.endpointIds);
+
+                // Validate endpoint IDs
+                const validEndpoints = data.endpointIds?.length
+                    ? await prisma.endpoint.findMany({
+                          where: { id: { in: data.endpointIds } },
+                          select: { id: true }
+                      })
+                    : [];
+                const validEndpointIds = validEndpoints.map((endpoint) => endpoint.id);
+
+                const newToken = await prisma.token.create({
+                    data: {
+                        name: data.name,
+                        token: data.token || randomBytes(32).toString('hex'),
+                        endpoints: {
+                            connect: validEndpointIds.map((id: string) => ({ id }))
+                        }
+                    }
+                });
+                return json(newToken);
+            }
+
+            case 'delete-token':
+                await prisma.token.delete({
+                    where: { id: data.id }
+                });
+                return json({ success: true });
+
+            case 'create-endpoint': {
+                const newEndpoint = await prisma.endpoint.create({
+                    data: {
+                        endpoint: data.endpoint,
+                        remote_endpoint: data.remote_endpoint,
+                        method: data.method,
+                        tokens: data.tokenIds?.length
+                            ? { connect: data.tokenIds.map((id: string) => ({ id })) }
+                            : undefined
+                    }
+                });
+                return json(newEndpoint);
+            }
+
+            case 'delete-endpoint':
+                await prisma.endpoint.update({
+                    where: { id: data.id },
+                    data: { tokens: { set: [] } }
+                });
+                await prisma.endpoint.delete({
+                    where: { id: data.id }
+                });
+                return json({ success: true });
+
+            case 'update-endpoint-tokens': {
+                const updatedEndpoint = await prisma.endpoint.update({
+                    where: { id: data.id },
+                    data: {
+                        tokens: { set: data.tokenIds.map((id: string) => ({ id })) }
+                    }
+                });
+                return json(updatedEndpoint);
+            }
+
+            case 'update-token-endpoints': {
+                const updatedToken = await prisma.token.update({
+                    where: { id: data.id },
+                    data: {
+                        endpoints: { set: data.endpointIds.map((id: string) => ({ id })) }
+                    }
+                });
+                return json(updatedToken);
+            }
+
+            case 'list-tokens': {
+                const tokens = await prisma.token.findMany({
+                    select: {
+                        id: true,
+                        name: true,
+                        token: true
+                    }
+                });
+                return json(tokens);
+            }
+
+            default:
+                return json({ error: 'Invalid action' }, { status: 400 });
+        }
+    } catch (error) {
+        console.error('Error processing request:', error);
+        return json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
