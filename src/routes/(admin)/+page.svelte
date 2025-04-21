@@ -6,6 +6,11 @@
 </script>
 
 <style>
+    :global(body) {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        color: #333;
+    }
     :root {
         --spacing: 1rem;
         --color-bg: #f9fafb;
@@ -21,13 +26,16 @@
     }
 
     main {
-        max-width: 800px;
+        max-width: 1200px;
         margin: 2rem auto;
         padding: var(--spacing);
         background-color: var(--color-bg);
+        display: flex;
+        gap: var(--spacing);
     }
 
     section {
+        flex: 1;
         margin-bottom: 2rem;
     }
 
