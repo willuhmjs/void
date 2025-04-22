@@ -1,6 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { prisma } from '$lib/server/prisma/prismaConnection';
 import { randomBytes } from 'crypto';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export async function POST({ request }) {
     const authHeader = request.headers.get('Authorization');
@@ -8,12 +11,17 @@ export async function POST({ request }) {
         return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userAuthToken = authHeader.split(' ')[1];
-    const validToken = await prisma.userAuthTokens.findFirst({
-        where: { token: userAuthToken }
-    });
+    const token = authHeader.split(' ')[1];
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const userId = decoded.id;
 
-    if (!validToken) {
+        // Ensure the user exists in the database
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            return json({ error: 'Unauthorized' }, { status: 401 });
+        }
+    } catch (error) {
         return json({ error: 'Unauthorized' }, { status: 401 });
     }
 

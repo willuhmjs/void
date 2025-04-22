@@ -9,7 +9,6 @@ export const POST: RequestHandler = async ({ request, params }) => {
     }
 
     const token = authHeader.substring(7);
-    console.log(token);
 
     const dbToken = await prisma.token.findFirst({ 
         where: {
@@ -20,7 +19,6 @@ export const POST: RequestHandler = async ({ request, params }) => {
             endpoints: true
         }
     });
-    console.log(dbToken);
     if (!dbToken) {
         return new Response('Unauthorized: Invalid Token', { status: 401 });
     }

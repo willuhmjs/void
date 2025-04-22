@@ -3,6 +3,34 @@
 
     let selectedTokenId = '';
     let assignedEndpoints = [];
+
+    import { onMount } from 'svelte';
+    let jwt = '';
+    let expiryTime = '';
+
+    async function refreshToken() {
+        const formData = new FormData();
+        const response = await fetch('?/refresh-token', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        jwt = JSON.parse(result.data)[1];
+        updateExpiryTime();
+    }
+
+    function updateExpiryTime() {
+        if (jwt) {
+            const payload = JSON.parse(atob(jwt.split('.')[1]));
+            expiryTime = new Date(payload.exp * 1000).toLocaleString();
+        } else {
+            expiryTime = 'No token generated yet';
+        }
+    }
+
+    onMount(() => {
+        updateExpiryTime();
+    });
 </script>
 
 <style>
@@ -152,27 +180,10 @@
 
 <main>
     <section class="card top-section">
-        <h2 class="heading">User Auth Tokens</h2>
-
-        <form method="post" action="?/add-user-auth-token" class="form-inline">
-            <button type="submit">Add User Auth Token</button>
-        </form>
-
-        {#if (data.userAuthTokens ?? []).length > 0}
-            <ul>
-                {#each data.userAuthTokens ?? [] as token}
-                    <li class="card">
-                        <div><strong>Token:</strong> {token.token}</div>
-                        <form method="post" action="?/delete-user-auth-token" class="form-inline">
-                            <input type="hidden" name="tokenId" value={token.id} />
-                            <button type="submit">Delete</button>
-                        </form>
-                    </li>
-                {/each}
-            </ul>
-        {:else}
-            <p>No user auth tokens available.</p>
-        {/if}
+        <h2 class="heading">User Auth Token</h2>
+        <p><strong>Expires At:</strong> {expiryTime}</p>
+        <p><strong>Token:</strong> {jwt || 'No token generated yet'}</p>
+        <button on:click={refreshToken}>Refresh Token</button>
     </section>
 
     <div class="side-by-side">

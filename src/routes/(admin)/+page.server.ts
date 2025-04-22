@@ -1,5 +1,9 @@
 import { prisma } from '$lib/server/prisma/prismaConnection';
+import { error } from '@sveltejs/kit';
 import { randomBytes } from 'crypto';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = 'your-secret-key';
 
 export async function load() {
     try {
@@ -26,26 +30,24 @@ export async function load() {
             }
         });
 
-        const userAuthTokens = await prisma.userAuthTokens.findMany({
-            select: {
-                id: true,
-                token: true
-            }
-        });
-
         return {
             tokens,
-            endpoints,
-            userAuthTokens
+            endpoints
         };
     } catch (error) {
         console.error('Error fetching data:', error);
         return {
             tokens: [],
-            endpoints: [],
-            userAuthTokens: []
+            endpoints: []
         };
     }
+}
+
+function checkAuth<T>(session: T): T {
+    if (!session || !session.user) {
+        return error(401, "Unauthorized");
+    }
+    return session;
 }
 
 export const actions = {
@@ -160,21 +162,12 @@ export const actions = {
             });
         }
     },
-    'add-user-auth-token': async ({ request }) => {
-        const token = randomBytes(32).toString('hex'); // Generate a random 32-byte token
-
-        await prisma.userAuthTokens.create({
-            data: { token }
-        });
-    },
-    'delete-user-auth-token': async ({ request }) => {
-        const formData = await request.formData();
-        const tokenId = formData.get('tokenId') as string;
-
-        if (tokenId) {
-            await prisma.userAuthTokens.delete({
-                where: { id: tokenId }
-            });
-        }
+    'refresh-token': async ({ request, locals }) => {
+        const fSession = await locals.auth();
+        console.log(fSession);
+        const session = checkAuth(fSession);
+        const userId = session?.user?.id;
+        const token = jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '30m' });
+        return { token };
     }
 };
