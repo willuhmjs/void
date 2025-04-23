@@ -2,8 +2,9 @@ import { prisma } from '$lib/server/prisma/prismaConnection';
 import { error } from '@sveltejs/kit';
 import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
+import { env } from '$env/dynamic/private';
+const { JWT_SECRET } = env;
 
-const JWT_SECRET = 'your-secret-key';
 
 export async function load() {
     try {
