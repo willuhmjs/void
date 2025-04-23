@@ -5,22 +5,22 @@ import Keycloak from "@auth/sveltekit/providers/keycloak"
  
 export const { handle, signIn, signOut } = SvelteKitAuth({
   adapter: PrismaAdapter(prisma),
+  callbacks: {
+    signIn({ profile }) {
+        return profile.groups.includes("syskids")
+    }
+  },
   providers: [Keycloak({
     profile(profile) {
-        console.log(profile)
         return {
             name: profile.name ?? "",
             email: profile.email ?? "",
             image: profile.image ?? "",
-            groups: profile.groups ?? ["user"],
+            groups: profile.groups,
             username: profile.preferred_username ?? "",
         }
     },
-    // authorization: {
-    //     params: {
-    //       scope: "openid profile email groups",
-    //     },
-    //   },
+
   })],
   trustHost: true,
 })
