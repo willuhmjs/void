@@ -95,16 +95,18 @@ export const actions = {
 
         if (endpoint && remote_endpoint && method) {
             try {
-                await prisma.endpoint.create({
-                    data: {
-                        method,
-                        endpoint,
-                        remote_endpoint,
-                        tokens: tokenIds.length > 0
-                            ? { connect: tokenIds.map((id) => ({ id })) }
-                            : [] // Allow no tokens to be connected
-                    }
-                });
+                const data: any = {
+                    method,
+                    endpoint,
+                    remote_endpoint
+                };
+
+                // Include tokens only if tokenIds is not empty
+                if (tokenIds.length > 0) {
+                    data.tokens = { connect: tokenIds.map((id) => ({ id })) };
+                }
+
+                await prisma.endpoint.create({ data });
                 console.log('Endpoint created successfully'); // Debugging log
             } catch (error) {
                 console.error('Error creating endpoint:', error); // Debugging log

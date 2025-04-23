@@ -30,7 +30,7 @@ model Token {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  endpoints Endpoint[] @relation("EndpointTokens")
+  endpoints Endpoint[] @relation("EndpointTokens") 
 }
 
 // auth shii
