@@ -56,7 +56,6 @@ export const actions = {
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const name = formData.get('name') as string;
-        const endpointIds = formData.getAll('endpointIds') as string[]; // User-provided endpoint IDs
 
         if (name) {
             const token = randomBytes(32).toString('hex'); // Generate a random 32-byte token
@@ -65,9 +64,7 @@ export const actions = {
                 data: {
                     name,
                     token,
-                    endpoints: endpointIds.length > 0
-                        ? { connect: endpointIds.map((id) => ({ id })) }
-                        : []
+                   
                 }
             });
         }

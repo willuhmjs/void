@@ -30,7 +30,7 @@ model Token {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  endpoints Endpoint[] @relation("EndpointTokens") 
+  endpoints Endpoint[] @relation("EndpointTokens")
 }
 
 // auth shii
@@ -44,9 +44,10 @@ model User {
   sessions      Session[]
   // Optional for WebAuthn support
   Authenticator Authenticator[]
- 
-  createdAt DateTime @default(now())
+  groups       String[]
+  createdAt    DateTime @default(now())
   updatedAt DateTime @updatedAt
+  username     String? @unique
 
 }
  

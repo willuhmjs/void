@@ -24,9 +24,7 @@ export async function POST({ request }) {
         // Ensure the user exists in the database
         const user = await prisma.user.findFirst({
             where: {
-            email: {
-                in: [`${decoded.username}@odu.edu`, `${decoded.username}@cs.odu.edu`]
-            }
+                username: decoded.username
             }
         });
         if (!user) {
