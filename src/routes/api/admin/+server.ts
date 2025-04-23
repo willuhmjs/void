@@ -3,7 +3,8 @@ import { prisma } from '$lib/server/prisma/prismaConnection';
 import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import { env } from '$env/dynamic/private';
+const { JWT_SECRET } = env;
 
 export async function POST({ request }) {
     const authHeader = request.headers.get('Authorization');
@@ -14,15 +15,25 @@ export async function POST({ request }) {
     const token = authHeader.split(' ')[1];
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const userId = decoded.id;
+        // check if token is expired
+        if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+            return json({ error: 'Unauthorized: Expired Token' }, { status: 401 });
+        }
+
 
         // Ensure the user exists in the database
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const user = await prisma.user.findFirst({
+            where: {
+            email: {
+                in: [`${decoded.username}@odu.edu`, `${decoded.username}@cs.odu.edu`]
+            }
+            }
+        });
         if (!user) {
-            return json({ error: 'Unauthorized' }, { status: 401 });
+            return json({ error: 'Unauthorized: No User' }, { status: 401 });
         }
     } catch (error) {
-        return json({ error: 'Unauthorized' }, { status: 401 });
+        return json({ error: 'Unauthorized: Token Verification Failure' }, { status: 401 });
     }
 
     const body = await request.json();

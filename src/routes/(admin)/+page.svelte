@@ -28,6 +28,29 @@
         }
     }
 
+    function copyToken() {
+        if (jwt) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(jwt).then(() => {
+                    alert('Token copied to clipboard!');
+                });
+            } else {
+                // Fallback for environments where navigator.clipboard is undefined
+                const textarea = document.createElement('textarea');
+                textarea.value = jwt;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    alert('Token copied to clipboard!');
+                } catch (err) {
+                    alert('Failed to copy token.');
+                }
+                document.body.removeChild(textarea);
+            }
+        }
+    }
+
     onMount(() => {
         updateExpiryTime();
     });
@@ -176,14 +199,20 @@
         background-color: #fff;
         background-image: none;
     }
+
+    .token-text {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
 </style>
 
 <main>
     <section class="card top-section">
         <h2 class="heading">User Auth Token</h2>
         <p><strong>Expires At:</strong> {expiryTime}</p>
-        <p><strong>Token:</strong> {jwt || 'No token generated yet'}</p>
+        <p><strong>Token:</strong> <span class="token-text">{jwt || 'No token generated yet'}</span></p>
         <button on:click={refreshToken}>Refresh Token</button>
+        <button on:click={copyToken} disabled={!jwt}>Copy Token</button>
     </section>
 
     <div class="side-by-side">

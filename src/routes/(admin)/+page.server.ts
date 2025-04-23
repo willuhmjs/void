@@ -51,7 +51,8 @@ function checkAuth<T>(session: T): T {
 }
 
 export const actions = {
-    'add-token': async ({ request }) => {
+    'add-token': async ({ request, locals }) => {
+        const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const name = formData.get('name') as string;
         const endpointIds = formData.getAll('endpointIds') as string[]; // User-provided endpoint IDs
@@ -70,7 +71,8 @@ export const actions = {
             });
         }
     },
-    'delete-token': async ({ request }) => {
+    'delete-token': async ({ request, locals }) => {
+        const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenId = formData.get('tokenId');
 
@@ -80,7 +82,8 @@ export const actions = {
             });
         }
     },
-    'add-endpoint': async ({ request }) => {
+    'add-endpoint': async ({ request, locals }) => {
+        const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenIds = formData.getAll('tokenIds'); // Allow multiple token IDs
         const endpoint = formData.get('endpoint');
@@ -109,7 +112,8 @@ export const actions = {
             console.error('Invalid form data for creating endpoint'); // Debugging log
         }
     },
-    'delete-endpoint': async ({ request }) => {
+    'delete-endpoint': async ({ request, locals }) => {
+        const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const endpointId = formData.get('endpointId') as string | null;
 
@@ -130,7 +134,8 @@ export const actions = {
             });
           }
     },
-    'update-endpoint-tokens': async ({ request }) => {
+    'update-endpoint-tokens': async ({ request, locals }) => {
+        const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const endpointId = formData.get('endpointId') as string | null;
         const tokenIds = formData.getAll('tokenIds') as string[];
@@ -146,7 +151,8 @@ export const actions = {
             });
         }
     },
-    'update-token-endpoints': async ({ request }) => {
+    'update-token-endpoints': async ({ request, locals }) => {
+        const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenId = formData.get('tokenId') as string | null;
         const endpointIds = formData.getAll('endpoints') as string[];
@@ -163,11 +169,8 @@ export const actions = {
         }
     },
     'refresh-token': async ({ request, locals }) => {
-        const fSession = await locals.auth();
-        console.log(fSession);
-        const session = checkAuth(fSession);
-        const userId = session?.user?.id;
-        const token = jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '30m' });
+        const session = checkAuth(await locals.auth());
+        const token = jwt.sign({ username: session.user.email.split("@")[0] }, JWT_SECRET, { expiresIn: '30m' });
         return { token };
     }
 };
