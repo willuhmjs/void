@@ -1,9 +1,6 @@
 <script>
     export let data;
 
-    let selectedTokenId = '';
-    let assignedEndpoints = [];
-
     import { onMount } from 'svelte';
     let jwt = '';
     let expiryTime = '';
@@ -49,6 +46,14 @@
                 document.body.removeChild(textarea);
             }
         }
+    }
+
+    function handleFocus(event, exampleText) {
+        event.target.placeholder = exampleText;
+    }
+
+    function handleBlur(event, originalText) {
+        event.target.placeholder = originalText;
     }
 
     onMount(() => {
@@ -278,12 +283,16 @@
                     name="endpoint"
                     placeholder="Endpoint"
                     required
+                    on:focus={(e) => handleFocus(e, '/endpoint')}
+                    on:blur={(e) => handleBlur(e, 'Endpoint')}
                 />
                 <input
                     type="text"
                     name="remote_endpoint"
                     placeholder="Remote Endpoint"
                     required
+                    on:focus={(e) => handleFocus(e, 'http://localhost:6969/api/v1/endpoint')}
+                    on:blur={(e) => handleBlur(e, 'Remote Endpoint')}
                 />
                 <button type="submit">Add Endpoint</button>
             </form>
