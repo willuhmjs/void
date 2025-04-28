@@ -5,6 +5,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
     const authHeader = request.headers.get('Authorization');
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.warn('Unauthorized request: Missing or invalid Authorization header');
         return new Response('Unauthorized: No Token', { status: 401 });
     }
 
@@ -20,11 +21,13 @@ export const POST: RequestHandler = async ({ request, params }) => {
         }
     });
     if (!dbToken) {
+        console.warn('Unauthorized request: Token not found in database');
         return new Response('Unauthorized: Invalid Token', { status: 401 });
     }
 
     const hasEndpoint = dbToken.endpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
     if (!hasEndpoint) {
+        console.warn(`Unauthorized request: Token does not have access to endpoint /${params.endpoint}`);
         return new Response('Unauthorized: Invalid Endpoint', { status: 401 });
     }
 
@@ -32,6 +35,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
     headers.delete('Authorization'); 
 
     try {
+        console.info(`Proxying request to remote endpoint: ${hasEndpoint.remote_endpoint}`);
         const response = await fetch(hasEndpoint.remote_endpoint, {
             method: request.method,
             headers: headers,
@@ -40,9 +44,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
             duplex: 'half' 
         });
 
-        // Log just the status code
-        console.log('Response status code from target URL:', response.status);
-
+        console.info(`Response received from remote endpoint with status: ${response.status}`);
         return new Response(response.body, {
             status: response.status,
             headers: response.headers

@@ -5,9 +5,9 @@ import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
 const { JWT_SECRET } = env;
 
-
 export async function load() {
     try {
+        console.info('Fetching tokens and endpoints');
         const tokens = await prisma.token.findMany({
             select: {
                 id: true,
@@ -46,6 +46,7 @@ export async function load() {
 
 function checkAuth<T>(session: T): T {
     if (!session || !session.user) {
+        console.warn('Unauthorized access attempt');
         return error(401, "Unauthorized");
     }
     return session;
@@ -53,6 +54,7 @@ function checkAuth<T>(session: T): T {
 
 export const actions = {
     'add-token': async ({ request, locals }) => {
+        console.info('Adding a new token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const name = formData.get('name') as string;
@@ -70,6 +72,7 @@ export const actions = {
         }
     },
     'delete-token': async ({ request, locals }) => {
+        console.info('Deleting a token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenId = formData.get('tokenId');
@@ -81,6 +84,7 @@ export const actions = {
         }
     },
     'add-endpoint': async ({ request, locals }) => {
+        console.info('Adding a new endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenIds = formData.getAll('tokenIds'); // Allow multiple token IDs
@@ -113,6 +117,7 @@ export const actions = {
         }
     },
     'delete-endpoint': async ({ request, locals }) => {
+        console.info('Deleting an endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const endpointId = formData.get('endpointId') as string | null;
@@ -135,6 +140,7 @@ export const actions = {
           }
     },
     'update-endpoint-tokens': async ({ request, locals }) => {
+        console.info('Updating tokens for an endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const endpointId = formData.get('endpointId') as string | null;
@@ -152,6 +158,7 @@ export const actions = {
         }
     },
     'update-token-endpoints': async ({ request, locals }) => {
+        console.info('Updating endpoints for a token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenId = formData.get('tokenId') as string | null;
@@ -169,6 +176,7 @@ export const actions = {
         }
     },
     'refresh-token': async ({ request, locals }) => {
+        console.info('Refreshing a token');
         const session = checkAuth(await locals.auth());
         const token = jwt.sign({ username: session.user.email.split("@")[0] }, JWT_SECRET, { expiresIn: '30m' });
         return { token };
