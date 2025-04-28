@@ -4,6 +4,12 @@
     import { onMount } from 'svelte';
     let jwt = '';
     let expiryTime = '';
+    let isDarkTheme = true;
+
+    function toggleTheme() {
+        isDarkTheme = !isDarkTheme;
+        document.documentElement.classList.toggle('dark', isDarkTheme);
+    }
 
     async function refreshToken() {
         const formData = new FormData();
@@ -58,15 +64,17 @@
 
     onMount(() => {
         updateExpiryTime();
+        document.documentElement.classList.add('dark'); // Enable dark theme by default
     });
 </script>
 
 <style>
     :global(body) {
         font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
-        color: #333;
+        background-color: var(--color-bg);
+        color: var(--color-text);
     }
+
     :root {
         --spacing: 1rem;
         --color-bg: #f9fafb;
@@ -81,6 +89,16 @@
         --control-line-height: 1.5;
     }
 
+    :global(.dark) {
+        --color-bg: #1f2937;
+        --color-card: #374151;
+        --color-border: #4b5563;
+        --color-primary: #60a5fa;
+        --color-primary-hover: #3b82f6;
+        --color-text: #f9fafb;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
     main {
         margin: 0;
         padding: var(--spacing);
@@ -88,6 +106,11 @@
         display: flex;
         flex-direction: column;
         gap: var(--spacing);
+    }
+
+    .theme-toggle {
+        margin-bottom: var(--spacing);
+        align-self: flex-end;
     }
 
     .top-section {
@@ -212,6 +235,10 @@
 </style>
 
 <main>
+    <button class="theme-toggle" on:click={toggleTheme}>
+        Toggle Theme
+    </button>
+
     <section class="card top-section">
         <h2 class="heading">User Auth Token</h2>
         <p><strong>Expires At:</strong> {expiryTime}</p>
