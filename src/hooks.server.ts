@@ -3,8 +3,9 @@ import { handle as authenticationHandle } from './auth';
 
 async function headerCheckHandle({ event, resolve }) {
   // Example: check for a custom header
-  const myHeader = event.request.headers.get('X-Forwarded-Proto');
-  console.log('X-Forwarded-Proto:', myHeader);
+for (const [key, value] of event.request.headers.entries()) {
+    console.log(`${key}: ${value}`);
+}
   return resolve(event);
 }
 
