@@ -5,6 +5,7 @@
     let jwt = '';
     let expiryTime = '';
     let isDarkTheme = true;
+    let searchQuery = '';
 
     function toggleTheme() {
         isDarkTheme = !isDarkTheme;
@@ -60,6 +61,12 @@
 
     function handleBlur(event, originalText) {
         event.target.placeholder = originalText;
+    }
+
+    function filterTokens() {
+        return data.tokens.filter(token =>
+            token.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
     }
 
     onMount(() => {
@@ -150,6 +157,19 @@
         align-items: center;
         gap: var(--spacing);
         margin-bottom: var(--spacing);
+    }
+
+    .form-inline-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing);
+    }
+
+    .form-inline-container .search-box {
+        margin-left: auto;
+        flex-grow: 1;
+        max-width: 300px;
     }
 
     /* Uniform control sizing */
@@ -254,19 +274,28 @@
         <section class="card">
             <h2 class="heading">Tokens</h2>
 
-            <form method="post" action="?/add-token" class="form-inline">
+            <div class="form-inline-container">
+                <form method="post" action="?/add-token" class="form-inline">
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Token Name"
+                        required
+                    />
+                    <button type="submit">Add Token</button>
+                </form>
+
                 <input
                     type="text"
-                    name="name"
-                    placeholder="Token Name"
-                    required
+                    placeholder="Filter tokens by name"
+                    bind:value={searchQuery}
+                    class="form-inline search-box"
                 />
-                <button type="submit">Add Token</button>
-            </form>
+            </div>
 
-            {#if data.tokens.length > 0}
+            {#if filterTokens().length > 0}
                 <ul>
-                    {#each data.tokens as token}
+                    {#each filterTokens() as token}
                         <li class="card">
                             <div><strong>Token:</strong> {token.token}</div>
                             <div><strong>Name:</strong> {token.name}</div>
@@ -294,7 +323,7 @@
                     {/each}
                 </ul>
             {:else}
-                <p>No tokens available.</p>
+                <p>No tokens match your search.</p>
             {/if}
         </section>
 
