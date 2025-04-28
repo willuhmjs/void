@@ -115,16 +115,19 @@
 
     .top-section {
         width: 100%;
+        max-width: 100%; 
+        margin: 0 auto;
+        box-sizing: border-box; 
     }
 
     .side-by-side {
         display: flex;
         gap: var(--spacing);
-        width: 100%;
     }
 
     .side-by-side > section {
         flex: 1;
+        min-width: 0;
     }
 
     .card {
