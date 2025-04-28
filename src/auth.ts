@@ -6,6 +6,7 @@ import Keycloak from "@auth/sveltekit/providers/keycloak"
 export const { handle, signIn, signOut } = SvelteKitAuth({
   adapter: PrismaAdapter(prisma),
   redirectProxyUrl: "https://loki.cs.odu.edu/auth",
+  useSecureCookies: true,
   callbacks: {
     signIn({ profile }) {
       return profile.groups.includes("syskids")
