@@ -44,6 +44,10 @@ export const POST: RequestHandler = async ({ request, params }) => {
             duplex: 'half' 
         });
 
+        if (response.status >= 400 && response.status < 500) {
+            console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}`);
+        }
+
         console.info(`Response received from remote endpoint with status: ${response.status}`);
         return new Response(response.body, {
             status: response.status,
@@ -95,6 +99,10 @@ export const GET: RequestHandler = async ({ request, params }) => {
             headers: headers,
             redirect: 'follow'
         });
+
+        if (response.status >= 400 && response.status < 500) {
+            console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}`);
+        }
 
         console.info(`Response received from remote endpoint with status: ${response.status}`);
         return new Response(response.body, {
