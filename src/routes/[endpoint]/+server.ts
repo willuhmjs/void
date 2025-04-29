@@ -45,8 +45,12 @@ export const POST: RequestHandler = async ({ request, params }) => {
         });
 
         if (response.status >= 400) {
-            const errorBody = await response.text();
-            console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
+            if (response.status === 404) {
+                console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}`);
+            } else {
+                const errorBody = await response.text();
+                console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
+            }
         }
 
         console.info(`Response received from remote endpoint with status: ${response.status}`);
@@ -102,8 +106,12 @@ export const GET: RequestHandler = async ({ request, params }) => {
         });
 
         if (response.status >= 400) {
-            const errorBody = await response.text();
-            console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
+            if (response.status === 404) {
+                console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}`);
+            } else {
+                const errorBody = await response.text();
+                console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
+            }
         }
 
         console.info(`Response received from remote endpoint with status: ${response.status}`);
