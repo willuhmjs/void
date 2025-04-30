@@ -64,7 +64,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
     }
 };
 
-export const GET: RequestHandler = async ({ request, params }) => {
+export const GET: RequestHandler = async ({ request, params, url }) => {
     const authHeader = request.headers.get('Authorization');
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -98,8 +98,11 @@ export const GET: RequestHandler = async ({ request, params }) => {
     headers.delete('Authorization'); 
 
     try {
-        console.info(`Proxying GET request to remote endpoint: ${hasEndpoint.remote_endpoint}`);
-        const response = await fetch(hasEndpoint.remote_endpoint, {
+        const queryString = url.search; // Extract query parameters from the URL
+        const remoteUrl = `${hasEndpoint.remote_endpoint}${queryString}`; // Append query parameters to the remote endpoint
+
+        console.info(`Proxying GET request to remote endpoint: ${remoteUrl}`);
+        const response = await fetch(remoteUrl, {
             method: 'GET',
             headers: headers,
             redirect: 'follow'
