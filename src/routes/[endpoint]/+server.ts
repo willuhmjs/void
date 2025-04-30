@@ -35,7 +35,6 @@ export const POST: RequestHandler = async ({ request, params }) => {
     headers.delete('Authorization'); 
 
     try {
-        console.info(`Proxying request to remote endpoint: ${hasEndpoint.remote_endpoint}`);
         const response = await fetch(hasEndpoint.remote_endpoint, {
             method: request.method,
             headers: headers,
@@ -45,15 +44,11 @@ export const POST: RequestHandler = async ({ request, params }) => {
         });
 
         if (response.status >= 400) {
-            if (response.status === 404) {
-                console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}`);
-            } else {
-                const errorBody = await response.text();
-                console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
-            }
+            const errorBody = await response.text();
+            console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
         }
 
-        console.info(`Response received from remote endpoint with status: ${response.status}`);
+        console.info(`Response received from remote endpoint ${hasEndpoint.remote_endpoint} with status: ${response.status}`);
         return new Response(response.body, {
             status: response.status,
             headers: response.headers
