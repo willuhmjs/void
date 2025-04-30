@@ -88,11 +88,15 @@ export const actions = {
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenIds = formData.getAll('tokenIds'); // Allow multiple token IDs
-        const endpoint = formData.get('endpoint');
-        const remote_endpoint = formData.get('remote_endpoint');
+        let endpoint = formData.get('endpoint') as string;
+        let remote_endpoint = formData.get('remote_endpoint') as string;
         const method = formData.get('method');
 
         console.log('Form Data:', { tokenIds, endpoint, remote_endpoint, method }); // Debugging log
+
+        // Remove trailing slashes from URLs
+        if (endpoint) endpoint = endpoint.replace(/\/+$/, '');
+        if (remote_endpoint) remote_endpoint = remote_endpoint.replace(/\/+$/, '');
 
         if (endpoint && remote_endpoint && method) {
             try {
