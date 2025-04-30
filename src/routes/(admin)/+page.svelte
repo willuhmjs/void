@@ -350,7 +350,7 @@
                     name="remote_endpoint"
                     placeholder="Remote Endpoint"
                     required
-                    on:focus={(e) => handleFocus(e, 'http://localhost:6969/api/v1/endpoint')}
+                    on:focus={(e) => handleFocus(e, 'http://localhost:69/api/endpoint')}
                     on:blur={(e) => handleBlur(e, 'Remote Endpoint')}
                 />
                 <button type="submit">Add Endpoint</button>
