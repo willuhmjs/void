@@ -44,12 +44,12 @@ export async function POST({ request }) {
         switch (action) {
             case 'create-token': {
                 console.info('Creating a new token');
-                console.log(data.endpointIds);
+                console.log(data.endpoints);
 
-                // Validate endpoint IDs
-                const validEndpoints = data.endpointIds?.length
+                // Validate endpoint names
+                const validEndpoints = data.endpoints?.length
                     ? await prisma.endpoint.findMany({
-                          where: { id: { in: data.endpointIds } },
+                          where: { endpoint: { in: data.endpoints } },
                           select: { id: true }
                       })
                     : [];
@@ -113,10 +113,18 @@ export async function POST({ request }) {
 
             case 'update-token-endpoints': {
                 console.info(`Updating endpoints for token with ID: ${data.id}`);
+                const validEndpoints = data.endpoints?.length
+                    ? await prisma.endpoint.findMany({
+                          where: { endpoint: { in: data.endpoints } },
+                          select: { id: true }
+                      })
+                    : [];
+                const validEndpointIds = validEndpoints.map((endpoint) => endpoint.id);
+
                 const updatedToken = await prisma.token.update({
                     where: { id: data.id },
                     data: {
-                        endpoints: { set: data.endpointIds.map((id: string) => ({ id })) }
+                        endpoints: { set: validEndpointIds.map((id: string) => ({ id })) }
                     }
                 });
                 return json(updatedToken);
