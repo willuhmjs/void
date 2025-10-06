@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: void-postgres
+  annotations:
+    keel.sh/policy: minor
+    keel.sh/trigger: poll
+  name: void-postgres
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: void-postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: void-postgres
+    spec:
+      containers:
+        - image: postgres:latest
+          name: void-postgres
+          env:
+            - name: POSTGRES_DB
+              value: void
+            - name: POSTGRES_USER
+              value: void
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: void-secret
+                  key: POSTGRES_PASSWORD
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+          volumeMounts:
+            - name: void-postgres-storage
+              mountPath: /var/lib/postgresql
+      volumes:
+        - name: void-postgres-storage
+          persistentVolumeClaim:
+            claimName: void-postgres-pvc
+      terminationGracePeriodSeconds: 0
+      restartPolicy: Always

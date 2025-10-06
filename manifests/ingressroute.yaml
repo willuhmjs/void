@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: void
+  namespace: monitoring
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`void.cs.odu.edu`)
+      kind: Rule
+      services:
+        - name: void
+          port: 3000
+  tls:
+    secretName: void

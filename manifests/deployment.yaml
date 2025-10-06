@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: void
+  annotations:
+    keel.sh/policy: minor
+    keel.sh/trigger: poll
+  name: void
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: void
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: void
+    spec:
+      imagePullSecrets:
+        - name: gitlabreg
+      containers:
+        - image: registry.cs.odu.edu/systems-stuff/kubeprojects/api-auth-gateway:latest
+          name: void
+          ports:
+            - containerPort: 3000
+          env:
+          - name: AUTH_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: void-secret
+                key: AUTH_SECRET
+          - name: AUTH_KEYCLOAK_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: void-secret
+                key: AUTH_KEYCLOAK_SECRET
+          - name: AUTH_KEYCLOAK_ID
+            value: "api-auth-proxy"
+          - name: AUTH_KEYCLOAK_ISSUER
+            value: "https://auth2.cs.odu.edu/realms/systems-login"
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: void-secret
+                key: DATABASE_URL
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+      restartPolicy: Always
