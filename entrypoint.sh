@@ -6,4 +6,4 @@ npx prisma generate --schema=/app/prisma/schema.prisma
 
 #run custom server
 npm run build
-npx tsx src/index.js
+node build/index.js
