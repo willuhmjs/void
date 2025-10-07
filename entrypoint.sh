@@ -5,4 +5,5 @@ npx prisma migrate deploy --schema=/app/prisma/schema.prisma
 npx prisma generate --schema=/app/prisma/schema.prisma
 
 #run custom server
-npx tsx src/hooks.server.ts
+npm run build
+npx tsx src/index.js
