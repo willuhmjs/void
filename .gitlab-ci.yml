@@ -1,0 +1,4 @@
+include:
+  - project: 'systems-stuff/ci-templates'
+    file: '/docker-build.yml'
+    ref: 'main'
