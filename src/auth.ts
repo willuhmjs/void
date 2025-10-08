@@ -22,7 +22,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
             username: profile.preferred_username ?? "",
         }
     },
-
+    allowDangerousEmailAccountLinking: true,
   })],
   trustHost: true,
 })
