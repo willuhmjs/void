@@ -8,8 +8,9 @@ const { JWT_SECRET } = env;
 
 export async function POST({ request }) {
     const authHeader = request.headers.get('Authorization');
+    const host = request.headers.get('Host') || request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.warn('Unauthorized request: Missing or invalid Authorization header');
+        console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
         return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,7 +19,7 @@ export async function POST({ request }) {
         const decoded = jwt.verify(token, JWT_SECRET);
         // check if token is expired
         if (decoded.exp && Date.now() >= decoded.exp * 1000) {
-            console.warn('Unauthorized request: Expired token');
+            console.warn(`Unauthorized request from ${host}: Expired token`);
             return json({ error: 'Unauthorized: Expired Token' }, { status: 401 });
         }
 
@@ -29,7 +30,7 @@ export async function POST({ request }) {
             }
         });
         if (!user) {
-            console.warn('Unauthorized request: User not found in database');
+            console.warn(`Unauthorized request from ${host}: User not found in database`);
             return json({ error: 'Unauthorized: No User' }, { status: 401 });
         }
     } catch (error) {

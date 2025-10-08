@@ -3,9 +3,9 @@ import { prisma } from '$lib/server/prisma/prismaConnection';
 
 export const POST: RequestHandler = async ({ request, params }) => {
     const authHeader = request.headers.get('Authorization');
-
+    const host = request.headers.get('Host') || request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.warn('Unauthorized request: Missing or invalid Authorization header');
+        console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
         return new Response('Unauthorized: No Token', { status: 401 });
     }
 
@@ -21,13 +21,13 @@ export const POST: RequestHandler = async ({ request, params }) => {
         }
     });
     if (!dbToken) {
-        console.warn('Unauthorized request: Token not found in database');
+        console.warn(`Unauthorized request from ${host}: Token not found in database`);
         return new Response('Unauthorized: Invalid Token', { status: 401 });
     }
 
     const hasEndpoint = dbToken.endpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
     if (!hasEndpoint) {
-        console.warn(`Unauthorized request: Token does not have access to endpoint /${params.endpoint}`);
+        console.warn(`Unauthorized request from ${host}: Token does not have access to endpoint /${params.endpoint}`);
         return new Response('Unauthorized: Invalid Endpoint', { status: 401 });
     }
 
@@ -61,9 +61,9 @@ export const POST: RequestHandler = async ({ request, params }) => {
 
 export const GET: RequestHandler = async ({ request, params, url }) => {
     const authHeader = request.headers.get('Authorization');
-
+    const host = request.headers.get('Host') || request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.warn('Unauthorized request: Missing or invalid Authorization header');
+        console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
         return new Response('Unauthorized: No Token', { status: 401 });
     }
 
@@ -79,13 +79,13 @@ export const GET: RequestHandler = async ({ request, params, url }) => {
         }
     });
     if (!dbToken) {
-        console.warn('Unauthorized request: Token not found in database');
+        console.warn(`Unauthorized request from ${host}: Token not found in database`);
         return new Response('Unauthorized: Invalid Token', { status: 401 });
     }
 
     const hasEndpoint = dbToken.endpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
     if (!hasEndpoint) {
-        console.warn(`Unauthorized request: Token does not have access to endpoint /${params.endpoint}`);
+        console.warn(`Unauthorized request from ${host}: Token does not have access to endpoint /${params.endpoint}`);
         return new Response('Unauthorized: Invalid Endpoint', { status: 401 });
     }
 
