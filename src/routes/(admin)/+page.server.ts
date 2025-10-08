@@ -3,7 +3,6 @@ import { error } from '@sveltejs/kit';
 import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
-const { JWT_SECRET } = env;
 
 export async function load() {
     try {
@@ -182,7 +181,7 @@ export const actions = {
     'refresh-token': async ({ request, locals }) => {
         console.info('Refreshing a token');
         const session = checkAuth(await locals.auth());
-        const token = jwt.sign({ username: session.user.email.split("@")[0] }, JWT_SECRET, { expiresIn: '30m' });
+        const token = jwt.sign({ username: session.user.email.split("@")[0] }, env.JWT_SECRET, { expiresIn: '30m' });
         return { token };
     }
 };

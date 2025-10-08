@@ -33,6 +33,11 @@ spec:
               secretKeyRef:
                 name: void-secret
                 key: AUTH_SECRET
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: void-secret
+                key: JWT_SECRET
           - name: AUTH_KEYCLOAK_SECRET
             valueFrom:
               secretKeyRef:
