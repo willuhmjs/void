@@ -8,7 +8,7 @@ const { JWT_SECRET } = env;
 
 export async function POST({ request }) {
     const authHeader = request.headers.get('Authorization');
-    const host = request.headers.get('Host') || request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
+    const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr') || "Unkown"
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
         return json({ error: 'Unauthorized' }, { status: 401 });
