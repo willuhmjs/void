@@ -1,56 +1,65 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { prisma } from '$lib/server/prisma/prismaConnection';
 
-export const POST: RequestHandler = async ({ request, params }) => {
+async function getEndpoint(request: Request, params){
+    const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
     const authHeader = request.headers.get('Authorization');
-    const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr') || "Unkown"
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
-        return new Response('Unauthorized: No Token', { status: 401 });
-    }
 
-    const token = authHeader.substring(7);
-
-    const dbToken = await prisma.token.findFirst({ 
-        where: {
-            token: token
-        },
-        select: {
-            id: true,
-            endpoints: true
-        }
-    });
-    const dbHost = await prisma.host.findFirst({
-        where: {
-            host: host
-        },
-        select: {
-            id: true,
-            endpoints: true
-        }
-    })
     let dbEndpoints = []
-    if (dbToken){
-        dbEndpoints = dbToken.endpoints;
-    } else if (dbHost){
-        dbEndpoints = dbHost.endpoints;
+
+    if (authHeader){
+        const token = authHeader.substring(7);
+
+        const dbToken = await prisma.token.findFirst({
+            where: {
+                token: token
+            },
+            select: {
+                id: true,
+                endpoints: true
+            }
+        });
+        if (dbToken){
+            dbEndpoints = dbToken.endpoints;
+        }
+    } else if (host){
+        const dbHost = await prisma.host.findFirst({
+            where: {
+                host: host
+            },
+            select: {
+                id: true,
+                endpoints: true
+            }
+        })
+        if (dbHost){
+            dbEndpoints = dbHost.endpoints;
+        }
     }
     else {
-        console.warn(`Unauthorized request from ${host}: Token not found in database`);
-        return new Response('Unauthorized: Invalid Token', { status: 401 });
+        console.warn(`Unauthorized request from ${host}: Token or Host not in database`);
+        return null;
     }
 
     const hasEndpoint = dbEndpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
-    if (!hasEndpoint) {
+    if (hasEndpoint){
+        return hasEndpoint.remote_endpoint;
+    } else{
         console.warn(`Unauthorized request from ${host}: Token does not have access to endpoint /${params.endpoint}`);
-        return new Response('Unauthorized: Invalid Endpoint', { status: 401 });
     }
+}
 
+export const POST: RequestHandler = async ({ request, params }) => {
+    const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
+    const endpoint = await getEndpoint(request, params);
+    if (!endpoint){
+        return new Response('Unauthorized', { status: 403 });
+    }
     const headers = new Headers(request.headers);
     headers.delete('Authorization'); 
 
     try {
-        const response = await fetch(hasEndpoint.remote_endpoint, {
+        const response = await fetch(endpoint, {
             method: request.method,
             headers: headers,
             body: request.body, 
@@ -63,7 +72,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
             console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
         }
 
-        console.info(`Response received from remote endpoint ${hasEndpoint.remote_endpoint} with status: ${response.status}`);
+        console.info(`Response received from remote endpoint ${host} with status: ${response.status}`);
         return new Response(response.body, {
             status: response.status,
             headers: response.headers
@@ -75,33 +84,10 @@ export const POST: RequestHandler = async ({ request, params }) => {
 };
 
 export const GET: RequestHandler = async ({ request, params, url }) => {
-    const authHeader = request.headers.get('Authorization');
-    const host =  request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr') || "Unkown"
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
-        return new Response('Unauthorized: No Token', { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-
-    const dbToken = await prisma.token.findFirst({ 
-        where: {
-            token: token
-        },
-        select: {
-            id: true,
-            endpoints: true
-        }
-    });
-    if (!dbToken) {
-        console.warn(`Unauthorized request from ${host}: Token not found in database`);
-        return new Response('Unauthorized: Invalid Token', { status: 401 });
-    }
-
-    const hasEndpoint = dbToken.endpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
-    if (!hasEndpoint) {
-        console.warn(`Unauthorized request from ${host}: Token does not have access to endpoint /${params.endpoint}`);
-        return new Response('Unauthorized: Invalid Endpoint', { status: 401 });
+    const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
+    const endpoint = await getEndpoint(request, params);
+    if (!endpoint) {
+        return new Response('Unauthorized', { status: 403 });
     }
 
     const headers = new Headers(request.headers);
@@ -109,7 +95,7 @@ export const GET: RequestHandler = async ({ request, params, url }) => {
 
     try {
         const queryString = url.search; // Extract query parameters from the URL
-        const remoteUrl = `${hasEndpoint.remote_endpoint}${queryString}`; // Append query parameters to the remote endpoint
+        const remoteUrl = `${endpoint}${queryString}`; // Append query parameters to the remote endpoint
 
         console.info(`Proxying GET request to remote endpoint: ${remoteUrl}`);
         const response = await fetch(remoteUrl, {
@@ -127,7 +113,7 @@ export const GET: RequestHandler = async ({ request, params, url }) => {
             }
         }
 
-        console.info(`Response received from remote endpoint with status: ${response.status}`);
+        console.info(`Response received from remote endpoint ${host} with status: ${response.status}`);
         return new Response(response.body, {
             status: response.status,
             headers: response.headers
