@@ -20,12 +20,27 @@ export const POST: RequestHandler = async ({ request, params }) => {
             endpoints: true
         }
     });
-    if (!dbToken) {
+    const dbHost = await prisma.host.findFirst({
+        where: {
+            host: host
+        },
+        select: {
+            id: true,
+            endpoints: true
+        }
+    })
+    let dbEndpoints = []
+    if (dbToken){
+        dbEndpoints = dbToken.endpoints;
+    } else if (dbHost){
+        dbEndpoints = dbHost.endpoints;
+    }
+    else {
         console.warn(`Unauthorized request from ${host}: Token not found in database`);
         return new Response('Unauthorized: Invalid Token', { status: 401 });
     }
 
-    const hasEndpoint = dbToken.endpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
+    const hasEndpoint = dbEndpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
     if (!hasEndpoint) {
         console.warn(`Unauthorized request from ${host}: Token does not have access to endpoint /${params.endpoint}`);
         return new Response('Unauthorized: Invalid Endpoint', { status: 401 });

@@ -69,9 +69,15 @@
         );
     }
 
+    function filterHosts(){
+        return data.hosts.filter(host =>
+            host.name.toLowerCase().includes(searchQuery.toLocaleLowerCase())
+        )
+    }
+
     onMount(() => {
         updateExpiryTime();
-        document.documentElement.classList.add('dark'); // Enable dark theme by default
+        document.documentElement.classList.toggle('dark', isDarkTheme);
     });
 </script>
 
@@ -184,16 +190,8 @@
         border: 1px solid var(--color-border);
     }
 
-    /* Multi-select specific sizing */
-    .form-inline select[multiple] {
-        /* limit multi-select height */
-        max-height: calc(var(--control-height) * 3);
-        overflow-y: auto;
-        height: auto;
-    }
-
     /* Update Tokens form: stack items */
-    .token-list {
+    .entry-list {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -203,18 +201,18 @@
         border-top: 1px solid var(--color-border);
     }
 
-    .token-list label {
+    .entry-list label {
         margin: 0;
     }
 
-    .token-list select {
+    .entry-list select {
         width: 100%;
         max-width: 100%;
         max-height: calc(var(--control-height) * 3);
         height: auto;
     }
 
-    .token-list button {
+    .entry-list button {
         align-self: flex-start;
         margin-top: 0;
     }
@@ -284,10 +282,26 @@
                     />
                     <button type="submit">Add Token</button>
                 </form>
+                <br>
+                <form method="post" action="?/add-host" class="form-inline">
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Host Name"
+                        required
+                    />
+                    <input
+                        type="text"
+                        name="host"
+                        placeholder="yourhost.com"
+                        required
+                    />
+                    <button type="submit">Add Host</button>
+                </form>
 
                 <input
                     type="text"
-                    placeholder="Filter tokens by name"
+                    placeholder="Filter by name"
                     bind:value={searchQuery}
                     class="form-inline search-box"
                 />
@@ -304,7 +318,7 @@
                                 <button type="submit">Delete</button>
                             </form>
 
-                            <form method="post" action="?/update-token-endpoints" class="token-list">
+                            <form method="post" action="?/update-token-endpoints" class="entry-list">
                                 <input type="hidden" name="tokenId" value={token.id} />
                                 <label for="endpoints">Assign Endpoints:</label>
                                 <select name="endpoints" multiple>
@@ -324,6 +338,38 @@
                 </ul>
             {:else}
                 <p>No tokens match your search.</p>
+            {/if}
+            {#if filterHosts().length > 0}
+                <ul>
+                    {#each filterHosts() as host}
+                        <li class="card">
+                            <div><strong>Host:</strong> {host.host}</div>
+                            <div><strong>Name:</strong> {host.name}</div>
+                            <form method="post" action="?/delete-host" class="form-inline">
+                                <input type="hidden" name="hostId" value={host.id} />
+                                <button type="submit">Delete</button>
+                            </form>
+
+                            <form method="post" action="?/update-host-endpoints" class="entry-list">
+                                <input type="hidden" name="hostId" value={host.id} />
+                                <label for="endpoints">Assign Endpoints:</label>
+                                <select name="endpoints" multiple>
+                                    {#each data.endpoints as endpoint}
+                                        <option
+                                            value={endpoint.id}
+                                            selected={host.endpoints?.some(e => e.id === endpoint.id)}
+                                        >
+                                            {endpoint.endpoint}
+                                        </option>
+                                    {/each}
+                                </select>
+                                <button type="submit">Update Endpoints</button>
+                            </form>
+                        </li>
+                    {/each}
+                </ul>
+            {:else}
+                <p>No hosts match your search.</p>
             {/if}
         </section>
 
