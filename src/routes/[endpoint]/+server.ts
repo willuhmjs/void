@@ -21,9 +21,6 @@ async function getEndpoint(request: Request, params){
         });
         if (dbToken){
             dbEndpoints = dbToken.endpoints;
-        } else{
-            console.warn(`Unauthorized request from ${host}: Token does not exist in database`);
-            return null;
         }
     } 
     if (!dbEndpoints && host){
@@ -38,16 +35,12 @@ async function getEndpoint(request: Request, params){
         })
         if (dbHost){
             dbEndpoints = dbHost.endpoints;
-        } else{
-            console.warn(`Unauthorized request from ${host}: Host does not exist in database`);
-            return null;
         }
     }
     if (!dbEndpoints) {
         console.warn(`Unauthorized request from ${host}: Token or Host not in database`);
         return null;
     }
-
     const hasEndpoint = dbEndpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
     if (hasEndpoint){
         return hasEndpoint.remote_endpoint;
