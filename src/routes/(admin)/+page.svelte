@@ -272,7 +272,7 @@
         <section class="card">
             <h2 class="heading">Tokens</h2>
 
-            <div class="form-inline-container">
+            <div class="form-container">
                 <form method="post" action="?/add-token" class="form-inline">
                     <input
                         type="text"
