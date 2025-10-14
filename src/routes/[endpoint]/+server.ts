@@ -5,7 +5,7 @@ async function getEndpoint(request: Request, params){
     const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr')
     const authHeader = request.headers.get('Authorization');
 
-    let dbEndpoints = []
+    let dbEndpoints;
 
     if (authHeader){
         const token = authHeader.substring(7);
@@ -25,7 +25,8 @@ async function getEndpoint(request: Request, params){
             console.warn(`Unauthorized request from ${host}: Token does not exist in database`);
             return null;
         }
-    } else if (host){
+    } 
+    if (!dbEndpoints && host){
         const dbHost = await prisma.host.findFirst({
             where: {
                 host: host
@@ -42,7 +43,7 @@ async function getEndpoint(request: Request, params){
             return null;
         }
     }
-    else {
+    if (!dbEndpoints) {
         console.warn(`Unauthorized request from ${host}: Token or Host not in database`);
         return null;
     }
