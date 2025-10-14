@@ -21,6 +21,9 @@ async function getEndpoint(request: Request, params){
         });
         if (dbToken){
             dbEndpoints = dbToken.endpoints;
+        } else{
+            console.warn(`Unauthorized request from ${host}: Token does not exist in database`);
+            return null;
         }
     } else if (host){
         const dbHost = await prisma.host.findFirst({
@@ -34,6 +37,9 @@ async function getEndpoint(request: Request, params){
         })
         if (dbHost){
             dbEndpoints = dbHost.endpoints;
+        } else{
+            console.warn(`Unauthorized request from ${host}: Host does not exist in database`);
+            return null;
         }
     }
     else {
@@ -45,7 +51,8 @@ async function getEndpoint(request: Request, params){
     if (hasEndpoint){
         return hasEndpoint.remote_endpoint;
     } else{
-        console.warn(`Unauthorized request from ${host}: Token does not have access to endpoint /${params.endpoint}`);
+        console.warn(`Unauthorized request from ${host}: does not have access to endpoint /${params.endpoint}`);
+        return null;
     }
 }
 
@@ -72,7 +79,7 @@ export const POST: RequestHandler = async ({ request, params }) => {
             console.error(`Error response from remote endpoint: ${response.status} ${response.statusText}, Body: ${errorBody}`);
         }
 
-        console.info(`Response received from remote endpoint ${host} with status: ${response.status}`);
+        console.info(`Response received for ${host} from remote endpoint ${endpoint} with status: ${response.status}`);
         return new Response(response.body, {
             status: response.status,
             headers: response.headers
@@ -113,7 +120,7 @@ export const GET: RequestHandler = async ({ request, params, url }) => {
             }
         }
 
-        console.info(`Response received from remote endpoint ${host} with status: ${response.status}`);
+        console.info(`Response received for ${host} from remote endpoint ${endpoint} with status: ${response.status}`);
         return new Response(response.body, {
             status: response.status,
             headers: response.headers
