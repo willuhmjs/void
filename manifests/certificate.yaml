@@ -5,7 +5,7 @@ metadata:
   namespace: relaypoint
 spec:
   dnsNames:
-    - void.cs.odu.edu
+    - void.admin.cs.odu.edu
   issuerRef:
     kind: ClusterIssuer
     name: cs-dns-cluster

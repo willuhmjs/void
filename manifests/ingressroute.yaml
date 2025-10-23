@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`void.cs.odu.edu`)
+    - match: Host(`void.admin.cs.odu.edu`)
       kind: Rule
       services:
         - name: void
