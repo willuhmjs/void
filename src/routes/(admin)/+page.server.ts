@@ -166,6 +166,34 @@ export const actions = {
             console.error('Invalid form data for creating endpoint'); // Debugging log
         }
     },
+    'default-endpoint': async ({ request, locals }) => {
+        console.info('Deleting an endpoint');
+        const session = checkAuth(await locals.auth());
+        const formData = await request.formData();
+        const endpointId = formData.get('endpointId') as string | null;
+
+        if (endpointId) {
+            // Fetch all existing token IDs
+            const allTokenIds = await prisma.token.findMany({
+                select: {
+                    id: true,
+                },
+            });
+
+            // Connect the endpoint to all tokens
+            await prisma.endpoint.update({
+                where: { id: endpointId },
+                data: {
+                    tokens: {
+                        set: allTokenIds.map((token) => ({ id: token.id })),
+                    },
+                },
+            });
+            console.info(`Endpoint ${endpointId} enabled for all tokens.`);
+        } else {
+            console.warn('No endpointId provided for default-endpoint action.');
+        }
+    },
     'delete-endpoint': async ({ request, locals }) => {
         console.info('Deleting an endpoint');
         const session = checkAuth(await locals.auth());

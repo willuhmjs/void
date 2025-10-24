@@ -414,6 +414,10 @@
                                 <input type="hidden" name="endpointId" value={endpoint.id} />
                                 <button type="submit">Delete</button>
                             </form>
+                                <form method="post" action="?/default-endpoint" class="form-inline">
+                                <input type="hidden" name="endpointId" value={endpoint.id} />
+                                <button type="submit">Default (All Tokens)</button>
+                            </form>
                         </li>
                     {/each}
                 </ul>
