@@ -20,7 +20,7 @@ export async function load() {
                 }
             }
         });
-        console.info('Fetching hosts and endpoints');
+        console.debug('Fetching hosts and endpoints');
         const hosts = await prisma.host.findMany({
             select: {
                 id: true,
@@ -135,7 +135,7 @@ export const actions = {
         let remote_endpoint = formData.get('remote_endpoint') as string;
         const method = formData.get('method');
 
-        console.log('Form Data:', { tokenIds, endpoint, remote_endpoint, method }); // Debugging log
+        console.debug('Form Data:', { tokenIds, endpoint, remote_endpoint, method }); // Debugging log
 
         // Remove trailing slashes from URLs
         if (endpoint) endpoint = endpoint.replace(/\/+$/, '');
@@ -215,7 +215,7 @@ export const actions = {
         }
     },
     'update-token-endpoints': async ({ request, locals }) => {
-        console.info('Updating endpoints for a token');
+        console.debug('Updating endpoints for a token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenId = formData.get('tokenId') as string | null;
@@ -233,7 +233,7 @@ export const actions = {
         }
     },
     'update-host-endpoints': async ({ request, locals }) => {
-        console.info('Updating endpoints for a token');
+        console.debug('Updating endpoints for a token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const hostId = formData.get('hostId') as string | null;

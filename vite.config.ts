@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [sveltekit()],
 	preview: {
-		allowedHosts: ["void.cs.odu.edu"]
+		allowedHosts: ["void.admin.cs.odu.edu"]
 	},
 	test: {
 		workspace: [
