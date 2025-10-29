@@ -1,15 +1,19 @@
 <script>
+    import { enhance } from '$app/forms';
+    import { onMount } from 'svelte';
+    import { invalidateAll } from '$app/navigation';
+
     export let data;
 
-    import { onMount } from 'svelte';
     let jwt = '';
     let expiryTime = '';
     let isDarkTheme = true;
     let searchQuery = '';
 
+    // Toggles Bootstrap's dark/light theme
     function toggleTheme() {
         isDarkTheme = !isDarkTheme;
-        document.documentElement.classList.toggle('dark', isDarkTheme);
+        document.documentElement.setAttribute('data-bs-theme', isDarkTheme ? 'dark' : 'light');
     }
 
     async function refreshToken() {
@@ -32,398 +36,199 @@
         }
     }
 
+    // Copies the JWT token to the clipboard
     function copyToken() {
-        if (jwt) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(jwt).then(() => {
-                    alert('Token copied to clipboard!');
-                });
-            } else {
-                // Fallback for environments where navigator.clipboard is undefined
-                const textarea = document.createElement('textarea');
-                textarea.value = jwt;
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    document.execCommand('copy');
-                    alert('Token copied to clipboard!');
-                } catch (err) {
-                    alert('Failed to copy token.');
-                }
-                document.body.removeChild(textarea);
-            }
+        if (jwt && navigator.clipboard) {
+            navigator.clipboard.writeText(jwt).then(() => {
+                alert('Token copied to clipboard!');
+            });
         }
     }
 
-    function handleFocus(event, exampleText) {
-        event.target.placeholder = exampleText;
-    }
+    // Enhancer function to invalidate data and update UI without full reload
+    const enhanceForm = () => {
+        return async ({ result }) => {
+            if (result.type === 'success') {
+                await invalidateAll();
+            }
+        };
+    };
 
-    function handleBlur(event, originalText) {
-        event.target.placeholder = originalText;
-    }
+    // Filters tokens based on the search query
+    $: filteredTokens = data.tokens.filter(token =>
+        token.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-    function filterTokens() {
-        return data.tokens.filter(token =>
-            token.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }
+    // Filters hosts based on the search query
+    $: filteredHosts = data.hosts.filter(host =>
+        host.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-    function filterHosts(){
-        return data.hosts.filter(host =>
-            host.name.toLowerCase().includes(searchQuery.toLocaleLowerCase())
-        )
-    }
-
+    // Set the initial theme on component mount
     onMount(() => {
         updateExpiryTime();
-        document.documentElement.classList.toggle('dark', isDarkTheme);
+        document.documentElement.setAttribute('data-bs-theme', isDarkTheme ? 'dark' : 'light');
     });
 </script>
 
-<style>
-    :global(body) {
-        font-family: Arial, sans-serif;
-        background-color: var(--color-bg);
-        color: var(--color-text);
-    }
+<svelte:head>
+    <!-- Removes the need for custom styling by relying on Bootstrap -->
+    <style>
+        .token-text {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+    </style>
+</svelte:head>
 
-    :root {
-        --spacing: 1rem;
-        --color-bg: #f9fafb;
-        --color-card: #ffffff;
-        --color-border: #e5e7eb;
-        --color-primary: #3b82f6;
-        --color-primary-hover: #2563eb;
-        --color-text: #111827;
-        --radius: 0.5rem;
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        --control-height: 2.5rem;
-        --control-line-height: 1.5;
-    }
+<main class="container-fluid p-3">
+    <div class="position-relative">
+        <button class="btn btn-outline-secondary position-absolute top-0 end-0" on:click={toggleTheme}>
+            Toggle Theme
+        </button>
+    </div>
 
-    :global(.dark) {
-        --color-bg: #1f2937;
-        --color-card: #374151;
-        --color-border: #4b5563;
-        --color-primary: #60a5fa;
-        --color-primary-hover: #3b82f6;
-        --color-text: #f9fafb;
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    main {
-        margin: 0;
-        padding: var(--spacing);
-        background-color: var(--color-bg);
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing);
-    }
-
-    .theme-toggle {
-        margin-bottom: var(--spacing);
-        align-self: flex-end;
-    }
-
-    .top-section {
-        width: 100%;
-        max-width: 100%; 
-        margin: 0 auto;
-        box-sizing: border-box; 
-    }
-
-    .side-by-side {
-        display: flex;
-        gap: var(--spacing);
-    }
-
-    .side-by-side > section {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .card {
-        background-color: var(--color-card);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: var(--spacing);
-    }
-
-    .heading {
-        font-size: 1.75rem;
-        color: var(--color-text);
-        margin-bottom: var(--spacing);
-    }
-
-    .form-inline {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--spacing);
-        margin-bottom: var(--spacing);
-    }
-
-    .form-inline-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: var(--spacing);
-    }
-
-    .form-inline-container .search-box {
-        margin-left: auto;
-        flex-grow: 1;
-        max-width: 300px;
-    }
-
-    /* Uniform control sizing */
-    input,
-    select,
-    button {
-        font-size: 1rem;
-        line-height: var(--control-line-height);
-        height: var(--control-height);
-        padding: 0 0.75rem;
-        border-radius: var(--radius);
-        border: 1px solid var(--color-border);
-    }
-
-    /* Update Tokens form: stack items */
-    .entry-list {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing);
-        width: 100%;
-        padding-top: var(--spacing);
-        border-top: 1px solid var(--color-border);
-    }
-
-    .entry-list label {
-        margin: 0;
-    }
-
-    .entry-list select {
-        width: 100%;
-        max-width: 100%;
-        max-height: calc(var(--control-height) * 3);
-        height: auto;
-    }
-
-    .entry-list button {
-        align-self: flex-start;
-        margin-top: 0;
-    }
-
-    button {
-        background-color: var(--color-primary);
-        color: #fff;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out;
-    }
-
-    button:hover {
-        background-color: var(--color-primary-hover);
-    }
-
-    ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    li:not(:last-child) {
-        margin-bottom: var(--spacing);
-    }
-
-    .endpoint-details {
-        margin-bottom: var(--spacing);
-        line-height: 1.5;
-    }
-
-    /* Ensure consistent select arrow alignment */
-    select {
-        background-color: #fff;
-        background-image: none;
-    }
-
-    .token-text {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-</style>
-
-<main>
-    <button class="theme-toggle" on:click={toggleTheme}>
-        Toggle Theme
-    </button>
-
-    <section class="card top-section">
-        <h2 class="heading">User Auth Token</h2>
-        <p><strong>Expires At:</strong> {expiryTime}</p>
-        <p><strong>Token:</strong> <span class="token-text">{jwt || 'No token generated yet'}</span></p>
-        <button on:click={refreshToken}>Refresh Token</button>
-        <button on:click={copyToken} disabled={!jwt}>Copy Token</button>
+    <section class="card mb-3">
+        <div class="card-body">
+            <h2 class="card-title">User Auth Token</h2>
+            <p><strong>Expires At:</strong> {expiryTime}</p>
+            <p><strong>Token:</strong> <span class="token-text">{jwt || 'No token generated yet'}</span></p>
+            <button class="btn btn-primary" on:click={refreshToken}>Refresh Token</button>
+            <button class="btn btn-secondary" on:click={copyToken} disabled={!jwt}>Copy Token</button>
+        </div>
     </section>
 
-    <div class="side-by-side">
-        <section class="card">
-            <h2 class="heading">Tokens</h2>
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <section class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Tokens & Hosts</h2>
+                    
+                    <!-- Add Token Form -->
+                    <form method="post" action="?/add-token" class="d-flex gap-2 mb-2" use:enhance={enhanceForm}>
+                        <input type="text" name="name" placeholder="Token Name" class="form-control" required />
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
 
-            <div class="form-container">
-                <form method="post" action="?/add-token" class="form-inline">
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Token Name"
-                        required
-                    />
-                    <button type="submit">Add Token</button>
-                </form>
-                <br>
-                <form method="post" action="?/add-host" class="form-inline">
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Host Name"
-                        required
-                    />
-                    <input
-                        type="text"
-                        name="host"
-                        placeholder="yourhost.com"
-                        required
-                    />
-                    <button type="submit">Add Host</button>
-                </form>
+                    <!-- Add Host Form -->
+                    <form method="post" action="?/add-host" class="d-flex gap-2 mb-3" use:enhance={enhanceForm}>
+                        <input type="text" name="name" placeholder="Host Name" class="form-control" required />
+                        <input type="text" name="host" placeholder="yourhost.com" class="form-control" required />
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
 
-                <input
-                    type="text"
-                    placeholder="Filter by name"
-                    bind:value={searchQuery}
-                    class="form-inline search-box"
-                />
-            </div>
+                    <input type="text" placeholder="Filter by name..." bind:value={searchQuery} class="form-control mb-3" />
 
-            {#if filterTokens().length > 0}
-                <ul>
-                    {#each filterTokens() as token}
-                        <li class="card">
-                            <div><strong>Token:</strong> {token.token}</div>
-                            <div><strong>Name:</strong> {token.name}</div>
-                            <form method="post" action="?/delete-token" class="form-inline">
-                                <input type="hidden" name="tokenId" value={token.id} />
-                                <button type="submit">Delete</button>
-                            </form>
+                    <!-- Display Tokens -->
+                    <ul class="list-unstyled">
+                        {#each filteredTokens as token (token.id)}
+                            <li class="card mb-3">
+                                <div class="card-body">
+                                    <div><strong>Name:</strong> {token.name}</div>
+                                    <div class="token-text"><strong>Token:</strong> {token.token}</div>
+                                    <form method="post" action="?/update-token-endpoints" class="mt-2" use:enhance={enhanceForm}>
+                                        <input type="hidden" name="tokenId" value={token.id} />
+                                        <fieldset>
+                                            <legend class="fs-6">Assign Endpoints:</legend>
+                                            {#each data.endpoints as endpoint}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="token-{token.id}-endpoint-{endpoint.id}" name="endpoints" value={endpoint.id} checked={token.endpoints?.some(e => e.id === endpoint.id)} />
+                                                    <label class="form-check-label" for="token-{token.id}-endpoint-{endpoint.id}">{endpoint.endpoint}</label>
+                                                </div>
+                                            {/each}
+                                        </fieldset>
+                                    </form>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button type="submit" class="btn btn-success btn-sm">Update Endpoints</button>
+                                        <form method="post" action="?/delete-token" use:enhance={enhanceForm} class="ms-auto">
+                                            <input type="hidden" name="tokenId" value={token.id} />
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                        {/each}
+                    </ul>
 
-                            <form method="post" action="?/update-token-endpoints" class="entry-list">
-                                <input type="hidden" name="tokenId" value={token.id} />
-                                <label for="endpoints">Assign Endpoints:</label>
-                                <select name="endpoints" multiple>
-                                    {#each data.endpoints as endpoint}
-                                        <option
-                                            value={endpoint.id}
-                                            selected={token.endpoints?.some(e => e.id === endpoint.id)}
-                                        >
-                                            {endpoint.endpoint}
-                                        </option>
-                                    {/each}
-                                </select>
-                                <button type="submit">Update Endpoints</button>
-                            </form>
-                        </li>
-                    {/each}
-                </ul>
-            {:else}
-                <p>No tokens match your search.</p>
-            {/if}
-            {#if filterHosts().length > 0}
-                <ul>
-                    {#each filterHosts() as host}
-                        <li class="card">
-                            <div><strong>Host:</strong> {host.host}</div>
-                            <div><strong>Name:</strong> {host.name}</div>
-                            <form method="post" action="?/delete-host" class="form-inline">
-                                <input type="hidden" name="hostId" value={host.id} />
-                                <button type="submit">Delete</button>
-                            </form>
+                     <!-- Display Hosts -->
+                    <ul class="list-unstyled">
+                        {#each filteredHosts as host (host.id)}
+                            <li class="card mb-3">
+                                <div class="card-body">
+                                     <div><strong>Name:</strong> {host.name}</div>
+                                    <div class="token-text"><strong>Host:</strong> {host.host}</div>
+                                    <form method="post" action="?/update-host-endpoints" class="mt-2" use:enhance={enhanceForm}>
+                                        <input type="hidden" name="hostId" value={host.id} />
+                                         <fieldset>
+                                            <legend class="fs-6">Assign Endpoints:</legend>
+                                             {#each data.endpoints as endpoint}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="host-{host.id}-endpoint-{endpoint.id}" name="endpoints" value={endpoint.id} checked={host.endpoints?.some(e => e.id === endpoint.id)} />
+                                                    <label class="form-check-label" for="host-{host.id}-endpoint-{endpoint.id}">{endpoint.endpoint}</label>
+                                                </div>
+                                            {/each}
+                                        </fieldset>
+                                    </form>
+                                    <div class="d-flex gap-2 mt-2">
+                                            <button type="submit" class="btn btn-success btn-sm">Update Endpoints</button>
+                                        <form method="post" action="?/delete-host" use:enhance={enhanceForm} class="ms-auto">
+                                            <input type="hidden" name="hostId" value={host.id} />
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                        {/each}
+                    </ul>
 
-                            <form method="post" action="?/update-host-endpoints" class="entry-list">
-                                <input type="hidden" name="hostId" value={host.id} />
-                                <label for="endpoints">Assign Endpoints:</label>
-                                <select name="endpoints" multiple>
-                                    {#each data.endpoints as endpoint}
-                                        <option
-                                            value={endpoint.id}
-                                            selected={host.endpoints?.some(e => e.id === endpoint.id)}
-                                        >
-                                            {endpoint.endpoint}
-                                        </option>
-                                    {/each}
-                                </select>
-                                <button type="submit">Update Endpoints</button>
-                            </form>
-                        </li>
-                    {/each}
-                </ul>
-            {:else}
-                <p>No hosts match your search.</p>
-            {/if}
-        </section>
+                    {#if filteredTokens.length === 0 && filteredHosts.length === 0}
+                        <p>No tokens or hosts match your search.</p>
+                    {/if}
+                </div>
+            </section>
+        </div>
 
-        <section class="card">
-            <h2 class="heading">Endpoints</h2>
+        <div class="col-lg-6">
+            <section class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Endpoints</h2>
+                    <form method="post" action="?/add-endpoint" class="d-flex flex-wrap gap-2 mb-3" use:enhance={enhanceForm}>
+                        <select name="method" class="form-select" style="width: auto;" required>
+                            <option value="POST">POST</option>
+                            <option value="GET">GET</option>
+                        </select>
+                        <input type="text" name="endpoint" placeholder="/endpoint" class="form-control" style="flex: 1;" required />
+                        <input type="text" name="remote_endpoint" placeholder="http://remote/api" class="form-control" style="flex: 1;" required />
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
 
-            <form method="post" action="?/add-endpoint" class="form-inline">
-                <select name="method" required>
-                    <option value="POST">POST</option>
-                    <option value="GET">GET</option>
-                </select>
-                <input
-                    type="text"
-                    name="endpoint"
-                    placeholder="Endpoint"
-                    required
-                    on:focus={(e) => handleFocus(e, '/endpoint')}
-                    on:blur={(e) => handleBlur(e, 'Endpoint')}
-                />
-                <input
-                    type="text"
-                    name="remote_endpoint"
-                    placeholder="Remote Endpoint"
-                    required
-                    on:focus={(e) => handleFocus(e, 'http://localhost:69/api/endpoint')}
-                    on:blur={(e) => handleBlur(e, 'Remote Endpoint')}
-                />
-                <button type="submit">Add Endpoint</button>
-            </form>
-
-            {#if data.endpoints.length > 0}
-                <ul>
-                    {#each data.endpoints as endpoint}
-                        <li class="card">
-                            <div class="endpoint-details">
-                                <div><strong>Endpoint:</strong> {endpoint.endpoint}</div>
-                                <div><strong>Remote:</strong> {endpoint.remote_endpoint}</div>
-                                <div><strong>Method:</strong> {endpoint.method}</div>
-                                <div><strong>ID:</strong> {endpoint.id}</div>
-                            </div>
-                            <form method="post" action="?/delete-endpoint" class="form-inline">
-                                <input type="hidden" name="endpointId" value={endpoint.id} />
-                                <button type="submit">Delete</button>
-                            </form>
-                                <form method="post" action="?/default-endpoint" class="form-inline">
-                                <input type="hidden" name="endpointId" value={endpoint.id} />
-                                <button type="submit">Default (All Tokens)</button>
-                            </form>
-                        </li>
-                    {/each}
-                </ul>
-            {:else}
-                <p>No endpoints available.</p>
-            {/if}
-        </section>
+                    {#if data.endpoints.length > 0}
+                        <ul class="list-unstyled">
+                            {#each data.endpoints as endpoint (endpoint.id)}
+                                <li class="card mb-2">
+                                    <div class="card-body">
+                                        <div><strong>Endpoint:</strong> {endpoint.endpoint}</div>
+                                        <div><strong>Remote:</strong> {endpoint.remote_endpoint}</div>
+                                        <div><strong>Method:</strong> {endpoint.method}</div>
+                                        <div class="d-flex gap-2 mt-2">
+                                             <form method="post" action="?/default-endpoint" use:enhance={enhanceForm}>
+                                                <input type="hidden" name="endpointId" value={endpoint.id} />
+                                                <button type="submit" class="btn btn-secondary btn-sm">Default</button>
+                                            </form>
+                                            <form method="post" action="?/delete-endpoint" use:enhance={enhanceForm} class="ms-auto">
+                                                <input type="hidden" name="endpointId" value={endpoint.id} />
+                                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </li>
+                            {/each}
+                        </ul>
+                    {:else}
+                        <p>No endpoints available.</p>
+                    {/if}
+                </div>
+            </section>
+        </div>
     </div>
 </main>

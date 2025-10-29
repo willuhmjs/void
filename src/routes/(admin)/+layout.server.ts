@@ -5,9 +5,9 @@ import { env } from '$env/dynamic/private';
 export const load: LayoutServerLoad = async (event) => {
   const session = await event.locals.auth();
   const debug = env.DEBUG || "false"
-    if ((!session || !session?.user) && debug == "false") {
-        return redirect(307, '/auth/signin')
-    }
+  if ((!session || !session?.user) && debug == "false") {
+      return redirect(307, '/auth/signin')
+  }
   return {
     session,
   }

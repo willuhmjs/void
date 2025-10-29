@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { env } from '$env/dynamic/private';
+const debug = env.DEBUG || "false"
 
 export async function load() {
     try {
@@ -59,7 +60,7 @@ export async function load() {
 }
 
 function checkAuth<T>(session: T): T {
-    if (!session || !session.user) {
+    if ((!session || !session?.user) && debug == "false") {
         console.warn('Unauthorized access attempt');
         return error(401, "Unauthorized");
     }
@@ -80,7 +81,6 @@ export const actions = {
                 data: {
                     name,
                     token,
-                   
                 }
             });
         }
