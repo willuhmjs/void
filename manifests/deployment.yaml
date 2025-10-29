@@ -3,9 +3,6 @@ kind: Deployment
 metadata:
   labels:
     app: void
-  annotations:
-    keel.sh/policy: minor
-    keel.sh/trigger: poll
   name: void
   namespace: monitoring
 spec:
