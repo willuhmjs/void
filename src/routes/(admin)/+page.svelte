@@ -9,6 +9,20 @@
     let expiryTime = '';
     let isDarkTheme = true;
     let searchQuery = '';
+    let notification = { type: '', message: '' };
+
+    // Clears the notification
+    function clearNotification() {
+        notification = { type: '', message: '' };
+    }
+    
+    // Sets and automatically dismisses a notification
+    function showNotification(type, message, duration = 5000) {
+        notification = { type, message };
+        setTimeout(() => {
+            clearNotification();
+        }, duration);
+    }
 
     // Toggles Bootstrap's dark/light theme
     function toggleTheme() {
@@ -17,14 +31,22 @@
     }
 
     async function refreshToken() {
-        const formData = new FormData();
-        const response = await fetch('?/refresh-token', {
-            method: 'POST',
-            body: formData
-        });
-        const result = await response.json();
-        jwt = JSON.parse(result.data)[1];
-        updateExpiryTime();
+        try {
+            const formData = new FormData();
+            const response = await fetch('?/refresh-token', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (!response.ok || result.type === 'error') {
+                throw new Error(result.message || 'Failed to refresh token.');
+            }
+            jwt = JSON.parse(result.data)[1];
+            updateExpiryTime();
+            showNotification('success', 'Token has been refreshed successfully!');
+        } catch (error) {
+            showNotification('error', error.message);
+        }
     }
 
     function updateExpiryTime() {
@@ -40,16 +62,23 @@
     function copyToken() {
         if (jwt && navigator.clipboard) {
             navigator.clipboard.writeText(jwt).then(() => {
-                alert('Token copied to clipboard!');
+                showNotification('success', 'Token copied to clipboard!');
+            }, () => {
+                showNotification('error', 'Failed to copy token.');
             });
         }
     }
 
-    // Enhancer function to invalidate data and update UI without full reload
+    // Enhancer function to invalidate data and update UI with notifications
     const enhanceForm = () => {
         return async ({ result }) => {
             if (result.type === 'success') {
                 await invalidateAll();
+                showNotification('success', result.data?.message || 'Operation successful!');
+            } else if (result.type === 'failure') {
+                showNotification('error', result.data?.message || 'An error occurred with your submission.');
+            } else if (result.type === 'error') {
+                showNotification('error', result.error?.message || 'A server error occurred.');
             }
         };
     };
@@ -82,6 +111,14 @@
 </svelte:head>
 
 <main class="container-fluid p-3">
+    <!-- Notification Display -->
+    {#if notification.message}
+        <div class="alert alert-{notification.type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert">
+            {notification.message}
+            <button type="button" class="btn-close" on:click={clearNotification} aria-label="Close"></button>
+        </div>
+    {/if}
+
     <div class="position-relative">
         <button class="btn btn-outline-secondary position-absolute top-0 end-0" on:click={toggleTheme}>
             Toggle Theme
@@ -126,8 +163,6 @@
                                 <div class="card-body">
                                     <div><strong>Name:</strong> {token.name}</div>
                                     <div class="token-text"><strong>Token:</strong> {token.token}</div>
-                                    
-                                    <!-- Update endpoints form now only wraps the inputs and has a unique ID -->
                                     <form method="post" action="?/update-token-endpoints" class="mt-2" use:enhance={enhanceForm} id="update-token-form-{token.id}">
                                         <input type="hidden" name="tokenId" value={token.id} />
                                         <fieldset>
@@ -140,13 +175,8 @@
                                             {/each}
                                         </fieldset>
                                     </form>
-
-                                    <!-- Action buttons are now outside the form, preventing nesting -->
                                     <div class="d-flex gap-2 mt-2">
-                                        <!-- This button submits the form above using the 'form' attribute -->
                                         <button type="submit" class="btn btn-success btn-sm" form="update-token-form-{token.id}">Update Endpoints</button>
-                                        
-                                        <!-- The delete form is now a sibling, not a descendant -->
                                         <form method="post" action="?/delete-token" use:enhance={enhanceForm} class="ms-auto">
                                             <input type="hidden" name="tokenId" value={token.id} />
                                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -164,8 +194,6 @@
                                 <div class="card-body">
                                      <div><strong>Name:</strong> {host.name}</div>
                                     <div class="token-text"><strong>Host:</strong> {host.host}</div>
-                                    
-                                    <!-- Update endpoints form now only wraps the inputs and has a unique ID -->
                                     <form method="post" action="?/update-host-endpoints" class="mt-2" use:enhance={enhanceForm} id="update-host-form-{host.id}">
                                         <input type="hidden" name="hostId" value={host.id} />
                                          <fieldset>
@@ -178,13 +206,8 @@
                                             {/each}
                                         </fieldset>
                                     </form>
-
-                                    <!-- Action buttons are now outside the form, preventing nesting -->
                                     <div class="d-flex gap-2 mt-2">
-                                        <!-- This button submits the form above using the 'form' attribute -->
                                         <button type="submit" class="btn btn-success btn-sm" form="update-host-form-{host.id}">Update Endpoints</button>
-                                        
-                                        <!-- The delete form is now a sibling, not a descendant -->
                                         <form method="post" action="?/delete-host" use:enhance={enhanceForm} class="ms-auto">
                                             <input type="hidden" name="hostId" value={host.id} />
                                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
