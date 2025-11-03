@@ -126,7 +126,9 @@
                                 <div class="card-body">
                                     <div><strong>Name:</strong> {token.name}</div>
                                     <div class="token-text"><strong>Token:</strong> {token.token}</div>
-                                    <form method="post" action="?/update-token-endpoints" class="mt-2" use:enhance={enhanceForm}>
+                                    
+                                    <!-- Update endpoints form now only wraps the inputs and has a unique ID -->
+                                    <form method="post" action="?/update-token-endpoints" class="mt-2" use:enhance={enhanceForm} id="update-token-form-{token.id}">
                                         <input type="hidden" name="tokenId" value={token.id} />
                                         <fieldset>
                                             <legend class="fs-6">Assign Endpoints:</legend>
@@ -138,8 +140,13 @@
                                             {/each}
                                         </fieldset>
                                     </form>
+
+                                    <!-- Action buttons are now outside the form, preventing nesting -->
                                     <div class="d-flex gap-2 mt-2">
-                                        <button type="submit" class="btn btn-success btn-sm">Update Endpoints</button>
+                                        <!-- This button submits the form above using the 'form' attribute -->
+                                        <button type="submit" class="btn btn-success btn-sm" form="update-token-form-{token.id}">Update Endpoints</button>
+                                        
+                                        <!-- The delete form is now a sibling, not a descendant -->
                                         <form method="post" action="?/delete-token" use:enhance={enhanceForm} class="ms-auto">
                                             <input type="hidden" name="tokenId" value={token.id} />
                                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -157,7 +164,9 @@
                                 <div class="card-body">
                                      <div><strong>Name:</strong> {host.name}</div>
                                     <div class="token-text"><strong>Host:</strong> {host.host}</div>
-                                    <form method="post" action="?/update-host-endpoints" class="mt-2" use:enhance={enhanceForm}>
+                                    
+                                    <!-- Update endpoints form now only wraps the inputs and has a unique ID -->
+                                    <form method="post" action="?/update-host-endpoints" class="mt-2" use:enhance={enhanceForm} id="update-host-form-{host.id}">
                                         <input type="hidden" name="hostId" value={host.id} />
                                          <fieldset>
                                             <legend class="fs-6">Assign Endpoints:</legend>
@@ -169,8 +178,13 @@
                                             {/each}
                                         </fieldset>
                                     </form>
+
+                                    <!-- Action buttons are now outside the form, preventing nesting -->
                                     <div class="d-flex gap-2 mt-2">
-                                            <button type="submit" class="btn btn-success btn-sm">Update Endpoints</button>
+                                        <!-- This button submits the form above using the 'form' attribute -->
+                                        <button type="submit" class="btn btn-success btn-sm" form="update-host-form-{host.id}">Update Endpoints</button>
+                                        
+                                        <!-- The delete form is now a sibling, not a descendant -->
                                         <form method="post" action="?/delete-host" use:enhance={enhanceForm} class="ms-auto">
                                             <input type="hidden" name="hostId" value={host.id} />
                                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
