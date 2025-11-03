@@ -44,7 +44,7 @@
             jwt = JSON.parse(result.data)[1];
             updateExpiryTime();
             showNotification('success', 'Token has been refreshed successfully!');
-        } catch (error) {
+        } catch (error)  {
             showNotification('error', error.message);
         }
     }
@@ -107,17 +107,25 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
+        .notification-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 9999;
+        }
     </style>
 </svelte:head>
 
 <main class="container-fluid p-3">
     <!-- Notification Display -->
-    {#if notification.message}
-        <div class="alert alert-{notification.type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert">
-            {notification.message}
-            <button type="button" class="btn-close" on:click={clearNotification} aria-label="Close"></button>
-        </div>
-    {/if}
+    <div class="notification-container">
+        {#if notification.message}
+            <div class="alert alert-{notification.type === 'success' ? 'success' : 'danger'} alert-dismissible fade show" role="alert">
+                {notification.message}
+                <button type="button" class="btn-close" on:click={clearNotification} aria-label="Close"></button>
+            </div>
+        {/if}
+    </div>
 
     <div class="position-relative">
         <button class="btn btn-outline-secondary position-absolute top-0 end-0" on:click={toggleTheme}>
