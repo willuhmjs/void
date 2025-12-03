@@ -28,5 +28,7 @@ ENV NODE_ENV=production
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
+USER 1000
+
 ENTRYPOINT ["./entrypoint.sh"]
 
