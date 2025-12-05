@@ -25,7 +25,7 @@ spec:
           ports:
             - containerPort: 3000
           envFrom:
-            - secretKeyRef:
+            - secretRef:
                 name: void-secret
           env:
           - name: AUTH_KEYCLOAK_ID
