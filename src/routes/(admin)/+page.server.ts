@@ -7,26 +7,11 @@ const debug = env.DEBUG || "false"
 
 export async function load() {
     try {
-        console.info('Fetching tokens and endpoints');
         const tokens = await prisma.token.findMany({
             select: {
                 id: true,
                 token: true,
                 name: true, 
-                endpoints: {
-                    select: {
-                        id: true,
-                        endpoint: true
-                    }
-                }
-            }
-        });
-        console.debug('Fetching hosts and endpoints');
-        const hosts = await prisma.host.findMany({
-            select: {
-                id: true,
-                host: true,
-                name: true,
                 endpoints: {
                     select: {
                         id: true,
@@ -47,7 +32,6 @@ export async function load() {
 
         return {
             tokens,
-            hosts,
             endpoints
         };
     } catch (error) {
@@ -97,40 +81,11 @@ export const actions = {
             });
         }
     },
-    'add-host': async ({ request, locals }) => {
-        console.info('Adding a new host');
-        const session = checkAuth(await locals.auth());
-        const formData = await request.formData();
-        const name = formData.get('name') as string;
-        const host = formData.get('host') as string;
-
-        if (name) {
-            await prisma.host.create({
-                data: {
-                    name,
-                    host,
-                }
-            });
-        }
-    },
-    'delete-host': async ({ request, locals }) => {
-        console.info('Deleting a token');
-        const session = checkAuth(await locals.auth());
-        const formData = await request.formData();
-        const hostId = formData.get('hostId');
-
-        if (hostId) {
-            await prisma.host.delete({
-                where: { id: hostId }
-            });
-        }
-    },
     'add-endpoint': async ({ request, locals }) => {
         console.info('Adding a new endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenIds = formData.getAll('tokenIds'); // Allow multiple token IDs
-        const hostIds = formData.getAll('hostIds');
         let endpoint = formData.get('endpoint') as string;
         let remote_endpoint = formData.get('remote_endpoint') as string;
         const method = formData.get('method');
@@ -152,9 +107,6 @@ export const actions = {
                 // Include tokens only if tokenIds is not empty
                 if (tokenIds.length > 0) {
                     data.tokens = { connect: tokenIds.map((id) => ({ id })) };
-                }
-                if (hostIds.length > 0) {
-                    data.hosts = { connect: hostIds.map((id) => ({ id })) };
                 }
 
                 await prisma.endpoint.create({ data });
@@ -208,9 +160,6 @@ export const actions = {
                 tokens: {
                   set: [] 
                 },
-                hosts: {
-                  set: []
-                }
               }
             });
         
@@ -226,7 +175,6 @@ export const actions = {
         const formData = await request.formData();
         const endpointId = formData.get('endpointId') as string | null;
         const tokenIds = formData.getAll('tokenIds') as string[];
-        const hostIds = formData.getAll('hostIds') as string[];
 
         if (endpointId) {
             await prisma.endpoint.update({
@@ -235,9 +183,6 @@ export const actions = {
                     tokens: {
                         set: tokenIds.map((id) => ({ id }))
                     },
-                    hosts: {
-                        set: hostIds.map((id) => ({ id }))
-                    }
                 }
             });
         }
@@ -252,24 +197,6 @@ export const actions = {
         if (tokenId) {
             await prisma.token.update({
                 where: { id: tokenId },
-                data: {
-                    endpoints: {
-                        set: endpointIds.map((id) => ({ id }))
-                    }
-                }
-            });
-        }
-    },
-    'update-host-endpoints': async ({ request, locals }) => {
-        console.debug('Updating endpoints for a token');
-        const session = checkAuth(await locals.auth());
-        const formData = await request.formData();
-        const hostId = formData.get('hostId') as string | null;
-        const endpointIds = formData.getAll('endpoints') as string[];
-
-        if (hostId) {
-            await prisma.host.update({
-                where: { id: hostId },
                 data: {
                     endpoints: {
                         set: endpointIds.map((id) => ({ id }))

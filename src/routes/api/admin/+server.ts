@@ -11,65 +11,34 @@ export async function POST({ request }) {
     const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr') || "Unkown"
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
-        return json({ error: 'Unauthorized' }, { status: 401 });
+        return json({ error: 'Unauthorized: missing header' }, { status: 401 });
     }
 
-    const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        // check if token is expired
-        if (decoded.exp && Date.now() >= decoded.exp * 1000) {
-            console.warn(`Unauthorized request from ${host}: Expired token`);
-            return json({ error: 'Unauthorized: Expired Token' }, { status: 401 });
-        }
-
-        // Ensure the user exists in the database
-        const user = await prisma.user.findFirst({
-            where: {
-                username: decoded.username
-            }
-        });
-        if (!user) {
-            console.warn(`Unauthorized request from ${host}: User not found in database`);
-            return json({ error: 'Unauthorized: No User' }, { status: 401 });
-        }
+        await authenticate(authHeader);
     } catch (error) {
-        console.error('Token verification failed:', error);
+        console.error(`Token verification from ${host} failed:`, error);
         return json({ error: 'Unauthorized: Token Verification Failure' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { action, data } = body;
+    const { action, data } = await request.json();
 
     try {
         switch (action) {
             case 'create-token': {
-                console.info('Creating a new token');
-                console.log(data.endpoints);
-
-                // Validate endpoint names
-                const validEndpoints = data.endpoints?.length
-                    ? await prisma.endpoint.findMany({
-                          where: { endpoint: { in: data.endpoints } },
-                          select: { id: true }
-                      })
-                    : [];
-                const validEndpointIds = validEndpoints.map((endpoint) => endpoint.id);
-
+                console.info(`Creating a new token ${data.name}`);
                 const newToken = await prisma.token.create({
                     data: {
                         name: data.name,
                         token: data.token || randomBytes(32).toString('hex'),
-                        endpoints: {
-                            connect: validEndpointIds.map((id: string) => ({ id }))
-                        }
+                        endpoints: { connect: await getEndpointIds(data.endpoints) }
                     }
                 });
                 return json(newToken);
             }
 
             case 'delete-token':
-                console.info(`Deleting token with ID: ${data.id}`);
+                console.info(`Deleting token ${data.id}`);
                 await prisma.token.delete({
                     where: { id: data.id }
                 });
@@ -114,18 +83,11 @@ export async function POST({ request }) {
 
             case 'update-token-endpoints': {
                 console.info(`Updating endpoints for token with ID: ${data.id}`);
-                const validEndpoints = data.endpoints?.length
-                    ? await prisma.endpoint.findMany({
-                          where: { endpoint: { in: data.endpoints } },
-                          select: { id: true }
-                      })
-                    : [];
-                const validEndpointIds = validEndpoints.map((endpoint) => endpoint.id);
 
                 const updatedToken = await prisma.token.update({
                     where: { id: data.id },
                     data: {
-                        endpoints: { set: validEndpointIds.map((id: string) => ({ id })) }
+                        endpoints: { set: await getEndpointIds(data.endpoints) }
                     }
                 });
                 return json(updatedToken);
@@ -151,4 +113,37 @@ export async function POST({ request }) {
         console.error('Error processing request:', error);
         return json({ error: 'Internal Server Error' }, { status: 500 });
     }
+}
+
+async function authenticate(authHeader: String){
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // check if token is expired
+    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+        throw json({ error: 'Unauthorized: Expired Token' }, { status: 401 });
+    }
+
+    // Ensure the user exists in the database
+    const user = await prisma.user.findFirst({
+        where: {
+            username: decoded.username
+        }
+    });
+    if (!user) {
+        throw json({ error: 'Unauthorized: No User' }, { status: 401 });
+    }
+}
+
+async function getEndpointIds(endpointNames: string[] | undefined) {
+    if (!endpointNames?.length) return [];
+    const endpoints = await prisma.endpoint.findMany({
+        where: { endpoint: { in: endpointNames } },
+        select: { id: true }
+    });
+
+    return endpoints.map((ep) => ({ id: ep.id }));
 }

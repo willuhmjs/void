@@ -21,7 +21,6 @@ model Endpoint {
   updatedAt      DateTime @updatedAt
 
   tokens         Token[]  @relation("EndpointTokens")
-  hosts          Host[]   @relation("EndpointHosts")
 }
 
 model Token {
@@ -32,16 +31,6 @@ model Token {
   updatedAt DateTime @updatedAt
 
   endpoints Endpoint[] @relation("EndpointTokens")
-}
-
-model Host {
-  id        String   @id @default(cuid())
-  host        String
-  name      String  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  endpoints Endpoint[] @relation("EndpointHosts")
 }
 
 model User {

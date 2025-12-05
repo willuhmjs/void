@@ -88,11 +88,6 @@
         token.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Filters hosts based on the search query
-    $: filteredHosts = data.hosts.filter(host =>
-        host.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
     // Set the initial theme on component mount
     onMount(() => {
         updateExpiryTime();
@@ -147,18 +142,11 @@
         <div class="col-lg-6">
             <section class="card">
                 <div class="card-body">
-                    <h2 class="card-title">Tokens & Hosts</h2>
+                    <h2 class="card-title">Tokens</h2>
                     
                     <!-- Add Token Form -->
                     <form method="post" action="?/add-token" class="d-flex gap-2 mb-2" use:enhance={enhanceForm}>
                         <input type="text" name="name" placeholder="Token Name" class="form-control" required />
-                        <button type="submit" class="btn btn-primary">Add</button>
-                    </form>
-
-                    <!-- Add Host Form -->
-                    <form method="post" action="?/add-host" class="d-flex gap-2 mb-3" use:enhance={enhanceForm}>
-                        <input type="text" name="name" placeholder="Host Name" class="form-control" required />
-                        <input type="text" name="host" placeholder="yourhost.com" class="form-control" required />
                         <button type="submit" class="btn btn-primary">Add</button>
                     </form>
 
@@ -195,39 +183,8 @@
                         {/each}
                     </ul>
 
-                     <!-- Display Hosts -->
-                    <ul class="list-unstyled">
-                        {#each filteredHosts as host (host.id)}
-                            <li class="card mb-3">
-                                <div class="card-body">
-                                     <div><strong>Name:</strong> {host.name}</div>
-                                    <div class="token-text"><strong>Host:</strong> {host.host}</div>
-                                    <form method="post" action="?/update-host-endpoints" class="mt-2" use:enhance={enhanceForm} id="update-host-form-{host.id}">
-                                        <input type="hidden" name="hostId" value={host.id} />
-                                         <fieldset>
-                                            <legend class="fs-6">Assign Endpoints:</legend>
-                                             {#each data.endpoints as endpoint}
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="host-{host.id}-endpoint-{endpoint.id}" name="endpoints" value={endpoint.id} checked={host.endpoints?.some(e => e.id === endpoint.id)} />
-                                                    <label class="form-check-label" for="host-{host.id}-endpoint-{endpoint.id}">{endpoint.endpoint}</label>
-                                                </div>
-                                            {/each}
-                                        </fieldset>
-                                    </form>
-                                    <div class="d-flex gap-2 mt-2">
-                                        <button type="submit" class="btn btn-success btn-sm" form="update-host-form-{host.id}">Update Endpoints</button>
-                                        <form method="post" action="?/delete-host" use:enhance={enhanceForm} class="ms-auto">
-                                            <input type="hidden" name="hostId" value={host.id} />
-                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </li>
-                        {/each}
-                    </ul>
-
-                    {#if filteredTokens.length === 0 && filteredHosts.length === 0}
-                        <p>No tokens or hosts match your search.</p>
+                    {#if filteredTokens.length === 0}
+                        <p>No tokens match your search.</p>
                     {/if}
                 </div>
             </section>

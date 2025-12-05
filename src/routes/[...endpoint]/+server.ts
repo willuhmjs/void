@@ -22,23 +22,9 @@ async function getEndpoint(request: Request, params){
         if (dbToken){
             dbEndpoints = dbToken.endpoints;
         }
-    } 
-    if (!dbEndpoints && host){
-        const dbHost = await prisma.host.findFirst({
-            where: {
-                host: host
-            },
-            select: {
-                id: true,
-                endpoints: true
-            }
-        })
-        if (dbHost){
-            dbEndpoints = dbHost.endpoints;
-        }
     }
     if (!dbEndpoints) {
-        console.warn(`Unauthorized request from ${host}: Token or Host not in database`);
+        console.warn(`Unauthorized request from ${host}: Token not in database`);
         return null;
     }
     const hasEndpoint = dbEndpoints.find((endpoint) => endpoint.endpoint === `/${params.endpoint}`);
