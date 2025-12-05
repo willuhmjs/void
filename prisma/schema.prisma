@@ -44,7 +44,6 @@ model Host {
   endpoints Endpoint[] @relation("EndpointHosts")
 }
 
-// auth shii
 model User {
   id            String          @id @default(cuid())
   name          String?
@@ -55,7 +54,6 @@ model User {
   sessions      Session[]
   // Optional for WebAuthn support
   Authenticator Authenticator[]
-  groups       String[]
   createdAt    DateTime @default(now())
   updatedAt DateTime @updatedAt
   username     String? @unique
