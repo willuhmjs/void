@@ -9,16 +9,11 @@ const { JWT_SECRET } = env;
 export async function POST({ request }) {
     const authHeader = request.headers.get('Authorization');
     const host = request.headers.get('X-Forwarded-For') || request.headers.get('Remote-Addr') || "Unkown"
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.warn(`Unauthorized request from ${host}: Missing or invalid Authorization header`);
-        return json({ error: 'Unauthorized: missing header' }, { status: 401 });
-    }
-
     try {
         await authenticate(authHeader);
     } catch (error) {
         console.error(`Token verification from ${host} failed:`, error);
-        return json({ error: 'Unauthorized: Token Verification Failure' }, { status: 401 });
+        return json({ error: 'Unauthorized: Token Verification Failure' }, { status: 403 });
     }
 
     const { action, data } = await request.json();
@@ -115,26 +110,20 @@ export async function POST({ request }) {
     }
 }
 
-async function authenticate(authHeader: String){
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw json({ error: 'Unauthorized' }, { status: 401 });
+async function authenticate(authHeader: String | null){
+    const token = authHeader?.substring(7, authHeader.length);
+    if (!token){
+        throw "Missing Token";
     }
-
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
     // check if token is expired
     if (decoded.exp && Date.now() >= decoded.exp * 1000) {
-        throw json({ error: 'Unauthorized: Expired Token' }, { status: 401 });
+        throw "Expired Token";
     }
 
     // Ensure the user exists in the database
-    const user = await prisma.user.findFirst({
-        where: {
-            username: decoded.username
-        }
-    });
-    if (!user) {
-        throw json({ error: 'Unauthorized: No User' }, { status: 401 });
+    if (!await prisma.user.findFirst({where: { username: decoded.username }})) {
+        throw "No User";
     }
 }
 
