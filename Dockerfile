@@ -14,6 +14,8 @@ RUN npm ci && npm cache clean --force
 
 COPY --chown=node:node . .
 
+RUN npm run build
+
 COPY --chown=node:node entrypoint.sh /
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "build/index.js"]
