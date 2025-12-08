@@ -53,10 +53,10 @@ function checkAuth<T>(session: T): T {
 
 export const actions = {
     'add-token': async ({ request, locals }) => {
-        console.info('Adding a new token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const name = formData.get('name') as string;
+        console.info(`${session?.user?.name} adding a new token ${name}`);
 
         if (name) {
             const token = randomBytes(32).toString('hex'); // Generate a random 32-byte token
@@ -70,10 +70,10 @@ export const actions = {
         }
     },
     'delete-token': async ({ request, locals }) => {
-        console.info('Deleting a token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenId = formData.get('tokenId');
+        console.info(`${session?.user?.name} deleting token ${tokenId}`);
 
         if (tokenId) {
             await prisma.token.delete({
@@ -82,7 +82,6 @@ export const actions = {
         }
     },
     'add-endpoint': async ({ request, locals }) => {
-        console.info('Adding a new endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
         const tokenIds = formData.getAll('tokenIds'); // Allow multiple token IDs
@@ -90,6 +89,7 @@ export const actions = {
         let remote_endpoint = formData.get('remote_endpoint') as string;
         const method = formData.get('method');
 
+        console.info(`${session?.user?.name} adding a new endpoint ${endpoint}`);
         console.debug('Form Data:', { tokenIds, endpoint, remote_endpoint, method }); // Debugging log
 
         // Remove trailing slashes from URLs
@@ -119,10 +119,11 @@ export const actions = {
         }
     },
     'default-endpoint': async ({ request, locals }) => {
-        console.info('Deleting an endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
-        const endpointId = formData.get('endpointId') as string | null;
+        const endpointId = formData.get('endpointId') as string;
+
+        console.info(`${session?.user?.name} defaulting endpoint ${endpointId}`);
 
         if (endpointId) {
             // Fetch all existing token IDs
@@ -147,10 +148,11 @@ export const actions = {
         }
     },
     'delete-endpoint': async ({ request, locals }) => {
-        console.info('Deleting an endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
-        const endpointId = formData.get('endpointId') as string | null;
+        const endpointId = formData.get('endpointId') as string;
+
+        console.info(`${session?.user?.name} deleting endpoint ${endpointId}`);
 
         if (endpointId) {
             // Disconnect all tokens associated with this endpoint
@@ -170,11 +172,12 @@ export const actions = {
           }
     },
     'update-endpoint': async ({ request, locals }) => {
-        console.info('Updating tokens for an endpoint');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
-        const endpointId = formData.get('endpointId') as string | null;
+        const endpointId = formData.get('endpointId') as string;
         const tokenIds = formData.getAll('tokenIds') as string[];
+
+        console.info(`${session?.user?.name} adding tokens ${tokenIds} to ${endpointId}`);
 
         if (endpointId) {
             await prisma.endpoint.update({
@@ -188,11 +191,12 @@ export const actions = {
         }
     },
     'update-token-endpoints': async ({ request, locals }) => {
-        console.debug('Updating endpoints for a token');
         const session = checkAuth(await locals.auth());
         const formData = await request.formData();
-        const tokenId = formData.get('tokenId') as string | null;
+        const tokenId = formData.get('tokenId') as string;
         const endpointIds = formData.getAll('endpoints') as string[];
+
+        console.info(`${session?.user?.name} adding endpoints ${endpointIds} to ${tokenId}`);
 
         if (tokenId) {
             await prisma.token.update({
@@ -206,8 +210,8 @@ export const actions = {
         }
     },
     'refresh-token': async ({ request, locals }) => {
-        console.info('Refreshing a token');
         const session = checkAuth(await locals.auth());
+        console.info(`${session?.user?.name} refreshing token`);
         const token = jwt.sign({ username: session.user.email.split("@")[0] }, env.JWT_SECRET, { expiresIn: '30m' });
         return { token };
     }

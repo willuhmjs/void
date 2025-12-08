@@ -24,12 +24,6 @@
         }, duration);
     }
 
-    // Toggles Bootstrap's dark/light theme
-    function toggleTheme() {
-        isDarkTheme = !isDarkTheme;
-        document.documentElement.setAttribute('data-bs-theme', isDarkTheme ? 'dark' : 'light');
-    }
-
     async function refreshToken() {
         try {
             const formData = new FormData();
@@ -50,12 +44,12 @@
     }
 
     function updateExpiryTime() {
-        if (jwt) {
-            const payload = JSON.parse(atob(jwt.split('.')[1]));
-            expiryTime = new Date(payload.exp * 1000).toLocaleString();
-        } else {
-            expiryTime = 'No token generated yet';
+        if (!jwt){
+            console.debug("No Token generated to calc updateExpiryTime");
+            return;
         }
+        const payload = JSON.parse(atob(jwt.split('.')[1]));
+        expiryTime = new Date(payload.exp * 1000).toLocaleString();
     }
 
     // Copies the JWT token to the clipboard
@@ -74,7 +68,7 @@
         return async ({ result }) => {
             if (result.type === 'success') {
                 await invalidateAll();
-                showNotification('success', result.data?.message || 'Operation successful!');
+                // showNotification('success', result.data?.message || 'Operation successful!');
             } else if (result.type === 'failure') {
                 showNotification('error', result.data?.message || 'An error occurred with your submission.');
             } else if (result.type === 'error') {
@@ -91,7 +85,6 @@
     // Set the initial theme on component mount
     onMount(() => {
         updateExpiryTime();
-        document.documentElement.setAttribute('data-bs-theme', isDarkTheme ? 'dark' : 'light');
     });
 </script>
 
@@ -122,19 +115,13 @@
         {/if}
     </div>
 
-    <div class="position-relative">
-        <button class="btn btn-outline-secondary position-absolute top-0 end-0" on:click={toggleTheme}>
-            Toggle Theme
-        </button>
-    </div>
-
     <section class="card mb-3">
         <div class="card-body">
             <h2 class="card-title">User Auth Token</h2>
             <p><strong>Expires At:</strong> {expiryTime}</p>
-            <p><strong>Token:</strong> <span class="token-text">{jwt || 'No token generated yet'}</span></p>
-            <button class="btn btn-primary" on:click={refreshToken}>Refresh Token</button>
-            <button class="btn btn-secondary" on:click={copyToken} disabled={!jwt}>Copy Token</button>
+            <p><strong>Token:</strong> <span class="token-text">{jwt || 'Click "Refresh"'}</span></p>
+            <button class="btn btn-primary" on:click={refreshToken} aria-label="Refresh Token"><i class="bi bi-arrow-clockwise"></i></button>
+            <button class="btn btn-secondary" on:click={copyToken} disabled={!jwt} aria-label="Copy Token"><i class="bi bi-clipboard"></i></button>
         </div>
     </section>
 
@@ -146,11 +133,9 @@
                     
                     <!-- Add Token Form -->
                     <form method="post" action="?/add-token" class="d-flex gap-2 mb-2" use:enhance={enhanceForm}>
-                        <input type="text" name="name" placeholder="Token Name" class="form-control" required />
-                        <button type="submit" class="btn btn-primary">Add</button>
+                        <input type="text" name="name" placeholder="Token Name" class="form-control" required  bind:value={searchQuery} />
+                        <button type="submit" class="btn btn-primary" aria-label="Add"><i class="bi bi-plus-square-dotted"></i></button>
                     </form>
-
-                    <input type="text" placeholder="Filter by name..." bind:value={searchQuery} class="form-control mb-3" />
 
                     <!-- Display Tokens -->
                     <ul class="list-unstyled">
@@ -159,23 +144,35 @@
                                 <div class="card-body">
                                     <div><strong>Name:</strong> {token.name}</div>
                                     <div class="token-text"><strong>Token:</strong> {token.token}</div>
-                                    <form method="post" action="?/update-token-endpoints" class="mt-2" use:enhance={enhanceForm} id="update-token-form-{token.id}">
+                                    
+                                    <!-- Form triggers automatically on change -->
+                                    <form method="post" action="?/update-token-endpoints" class="mt-2" use:enhance={enhanceForm}>
                                         <input type="hidden" name="tokenId" value={token.id} />
                                         <fieldset>
                                             <legend class="fs-6">Assign Endpoints:</legend>
                                             {#each data.endpoints as endpoint}
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="token-{token.id}-endpoint-{endpoint.id}" name="endpoints" value={endpoint.id} checked={token.endpoints?.some(e => e.id === endpoint.id)} />
-                                                    <label class="form-check-label" for="token-{token.id}-endpoint-{endpoint.id}">{endpoint.endpoint}</label>
+                                                    <input 
+                                                        class="form-check-input" 
+                                                        type="checkbox" 
+                                                        id="token-{token.id}-endpoint-{endpoint.id}" 
+                                                        name="endpoints" 
+                                                        value={endpoint.id} 
+                                                        checked={token.endpoints?.some(e => e.id === endpoint.id)} 
+                                                        on:change={(e) => e.currentTarget.form.requestSubmit()}
+                                                    />
+                                                    <label class="form-check-label" for="token-{token.id}-endpoint-{endpoint.id}">
+                                                        {endpoint.endpoint}
+                                                    </label>
                                                 </div>
                                             {/each}
                                         </fieldset>
                                     </form>
+
                                     <div class="d-flex gap-2 mt-2">
-                                        <button type="submit" class="btn btn-success btn-sm" form="update-token-form-{token.id}">Update Endpoints</button>
                                         <form method="post" action="?/delete-token" use:enhance={enhanceForm} class="ms-auto">
                                             <input type="hidden" name="tokenId" value={token.id} />
-                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                            <button type="submit" class="btn btn-danger btn-sm" aria-label="Delete Token"><i class="bi bi-trash"></i></button>
                                         </form>
                                     </div>
                                 </div>
@@ -183,7 +180,7 @@
                         {/each}
                     </ul>
 
-                    {#if filteredTokens.length === 0}
+                    {#if filteredTokens.length === 0 && data.tokens.length > 0}
                         <p>No tokens match your search.</p>
                     {/if}
                 </div>
@@ -201,7 +198,7 @@
                         </select>
                         <input type="text" name="endpoint" placeholder="/endpoint" class="form-control" style="flex: 1;" required />
                         <input type="text" name="remote_endpoint" placeholder="http://remote/api" class="form-control" style="flex: 1;" required />
-                        <button type="submit" class="btn btn-primary">Add</button>
+                        <button type="submit" class="btn btn-primary" aria-label="Add"><i class="bi bi-plus-square-dotted"></i></button>
                     </form>
 
                     {#if data.endpoints.length > 0}
@@ -213,11 +210,11 @@
                                         <div><strong>Remote:</strong> {endpoint.remote_endpoint}</div>
                                         <div><strong>Method:</strong> {endpoint.method}</div>
                                         <div class="d-flex gap-2 mt-2">
-                                             <form method="post" action="?/default-endpoint" use:enhance={enhanceForm}>
+                                             <form method="post" action="?/default-endpoint" use:enhance={enhanceForm} on:submit={showNotification('success', `Made endpoint ${endpoint.endpoint} default`)}>
                                                 <input type="hidden" name="endpointId" value={endpoint.id} />
                                                 <button type="submit" class="btn btn-secondary btn-sm">Default</button>
                                             </form>
-                                            <form method="post" action="?/delete-endpoint" use:enhance={enhanceForm} class="ms-auto">
+                                            <form method="post" action="?/delete-endpoint" use:enhance={enhanceForm} class="ms-auto" on:submit={showNotification('success', `deleted ${endpoint.endpoint}`)}>
                                                 <input type="hidden" name="endpointId" value={endpoint.id} />
                                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                             </form>
